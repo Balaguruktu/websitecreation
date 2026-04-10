@@ -16,6 +16,9 @@
     
     input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; background: var(--card); color: var(--text); }
     
+    .cat-manage { display: flex; gap: 8px; margin-top: 10px; }
+    .cat-manage input { flex-grow: 1; }
+
     ul { list-style: none; padding: 0; }
     li { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); cursor: pointer; }
@@ -25,6 +28,7 @@
     .task-meta { font-size: 0.8rem; color: #e74c3c; margin-top: 3px; font-weight: bold; }
     
     .del-btn { background:none; color:#ff4d4d; font-size:22px; padding: 0 10px; cursor: pointer; }
+    .clear-cat { font-size: 0.7rem; color: #999; cursor: pointer; text-decoration: underline; margin-left: 10px; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -37,6 +41,15 @@
   <div class="section">
     <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark/Light Mode</button>
     <button onclick="requestNotif()" style="width:100%; background:#9b59b6; color:white;">🔔 Enable Notifications</button>
+  </div>
+
+  <div class="section">
+    <h3>Manage Categories</h3>
+    <div class="cat-manage">
+      <input type="text" id="newCatInput" placeholder="New category name...">
+      <button onclick="addCategory()" style="background:#3498db; color:white;">Add Category</button>
+    </div>
+    <span class="clear-cat" onclick="resetCategories()">Reset to Default Categories</span>
   </div>
 
   <div class="section">
@@ -58,7 +71,7 @@
       authDomain: "mydashboard-7ace0.firebaseapp.com",
       databaseURL: "https://mydashboard-7ace0-default-rtdb.asia-southeast1.firebasedatabase.app/", 
       projectId: "mydashboard-7ace0",
-      storageBucket: "mydashboard-7ace0.firebaseastorage.app",
+      storageBucket: "mydashboard-7ace0.firebasestorage.app",
       messagingSenderId: "66001498071",
       appId: "1:66001498071:web:b28d7e058b99bdd0bfe592"
     };
@@ -70,6 +83,7 @@
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+    // --- CORE DASHBOARD LOGIC ---
     function toggleTheme() {
       const newTheme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       document.body.setAttribute('data-theme', newTheme);
@@ -80,22 +94,7 @@
       Notification.requestPermission().then(p => { if(p==='granted') new Notification("Reminders Active!"); });
     }
 
-    // --- FORMATTING HELPERS ---
-    function formatTime12h(timeStr) {
-      if (!timeStr) return "";
-      let [h, m] = timeStr.split(':');
-      let ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return `${h}:${m} ${ampm}`;
-    }
-
-    function formatDateFriendly(dateStr) {
-      if (!dateStr) return "";
-      const [y, m, d] = dateStr.split('-');
-      return `${parseInt(d)}-${months[parseInt(m)-1]}`;
-    }
-
-    // --- DATA SYNC ---
+    // --- DATA HANDLING ---
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
       if (data.theme) document.body.setAttribute('data-theme', data.theme);
@@ -103,6 +102,21 @@
       categories = data.categories || ["Home", "Work", "Personal"];
       render();
     });
+
+    function addCategory() {
+      const val = document.getElementById('newCatInput').value.trim();
+      if (val && !categories.includes(val)) {
+        categories.push(val);
+        db.ref('dashboard/categories').set(categories);
+        document.getElementById('newCatInput').value = "";
+      }
+    }
+
+    function resetCategories() {
+      if(confirm("Reset to Home, Work, and Personal?")) {
+        db.ref('dashboard/categories').set(["Home", "Work", "Personal"]);
+      }
+    }
 
     function addTask() {
       const text = document.getElementById('taskInput').value;
@@ -121,8 +135,28 @@
       db.ref('dashboard/tasks').set(tasks);
     }
 
+    // --- FORMATTING ---
+    function formatTime12h(timeStr) {
+      if (!timeStr) return "";
+      let [h, m] = timeStr.split(':');
+      let ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
+    function formatDateFriendly(dateStr) {
+      if (!dateStr) return "";
+      const [y, m, d] = dateStr.split('-');
+      return `${parseInt(d)}-${months[parseInt(m)-1]}`;
+    }
+
+    // --- RENDER UI ---
     function render() {
-      document.getElementById('taskCategory').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      // Update the dropdown for adding tasks
+      const select = document.getElementById('taskCategory');
+      select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      // Build category sections
       const container = document.getElementById('categoriesContainer');
       container.innerHTML = "";
       
@@ -161,13 +195,14 @@
     // --- NOTIFICATION ENGINE ---
     setInterval(() => {
       const now = new Date();
-      const curDate = now.toISOString().split('T')[0];
-      const curTime = now.toTimeString().split(' ')[0].substring(0, 5);
+      // Adjust curDate to local YYYY-MM-DD
+      const curDate = now.toLocaleDateString('en-CA'); 
+      const curTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
       tasks.forEach((t, i) => {
         if (!t.done && !t.notified && t.date === curDate && t.time === curTime) {
           if (Notification.permission === "granted") {
-            new Notification("⏰ Dashboard Reminder", { body: t.text });
+            new Notification("⏰ Task Reminder", { body: t.text });
             tasks[i].notified = true;
             db.ref('dashboard/tasks').set(tasks);
           }
