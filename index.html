@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Home Dashboard</title>
+  <title>Smart Home Dashboard Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root { --bg: #f4f4f9; --text: #333; --card: #ffffff; --accent: #3498db; }
@@ -11,24 +11,49 @@
     body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--bg); color: var(--text); transition: 0.3s; }
     .section { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     
-    button { padding: 10px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; }
-    .theme-btn { background: var(--accent); color: white; width: 100%; margin-bottom: 15px; }
+    .greeting { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; color: var(--accent); text-align: center; }
+    #weather { text-align: center; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; }
     
-    input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; background: var(--card); color: var(--text); }
-    
-    .cat-manage { display: flex; gap: 8px; margin-top: 10px; }
-    .cat-manage input { flex-grow: 1; }
+    /* Master Food List Management */
+    .master-food-manage { display: flex; gap: 8px; margin-bottom: 10px; }
+    #masterFoodTags { 
+      display: none; 
+      margin-top: 15px; 
+      padding-top: 15px; 
+      border-top: 1px solid rgba(0,0,0,0.1); 
+    }
+    .food-delete-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 8px; 
+      background: rgba(0,0,0,0.03); 
+      margin-bottom: 5px; 
+      border-radius: 6px; 
+    }
 
+    /* Meal Dropdown Grid */
+    .meal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
+    .meal-item { display: flex; flex-direction: column; }
+    .meal-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: bold; margin-bottom: 8px; }
+    
+    select.meal-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: var(--card); color: var(--text); font-weight: 500; cursor: pointer; }
+
+    button { padding: 10px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; transition: 0.2s; }
+    .theme-btn { background: var(--accent); color: white; width: 100%; margin-bottom: 10px; }
+    input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: var(--card); color: var(--text); }
+    
+    .input-group { position: relative; display: flex; align-items: center; }
+    .voice-btn { position: absolute; right: 10px; background: none; font-size: 20px; color: var(--accent); }
+
+    /* Task List Styling */
     ul { list-style: none; padding: 0; }
     li { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); cursor: pointer; }
+    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); }
     
-    .task-info { flex-grow: 1; display: flex; flex-direction: column; }
-    .task-text { font-size: 1.05rem; font-weight: 500; }
-    .task-meta { font-size: 0.8rem; color: #e74c3c; margin-top: 3px; font-weight: bold; }
-    
-    .del-btn { background:none; color:#ff4d4d; font-size:22px; padding: 0 10px; cursor: pointer; }
-    .clear-cat { font-size: 0.7rem; color: #999; cursor: pointer; text-decoration: underline; margin-left: 10px; }
+    .task-info { flex-grow: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .task-meta { font-size: 0.8rem; color: #e74c3c; font-weight: bold; white-space: nowrap; }
+    .del-btn { background:none; color:#ff4d4d; font-size:22px; padding-left: 10px; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -36,25 +61,51 @@
 </head>
 <body data-theme="light">
 
-  <h1>Our Haven</h1>
-
   <div class="section">
+    <div id="greeting" class="greeting">Hello!</div>
+    <div id="weather">Weather loading...</div>
     <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark/Light Mode</button>
-    <button onclick="requestNotif()" style="width:100%; background:#9b59b6; color:white;">🔔 Enable Notifications</button>
   </div>
 
   <div class="section">
-    <h3>Manage Categories</h3>
-    <div class="cat-manage">
-      <input type="text" id="newCatInput" placeholder="New category name...">
-      <button onclick="addCategory()" style="background:#3498db; color:white;">Add Category</button>
+    <h3>📂 Master Food Database</h3>
+    <div class="master-food-manage">
+      <input type="text" id="masterFoodInput" placeholder="Add new dish to list...">
+      <button onclick="addMasterFood()" style="background:var(--accent); color:white;">Add</button>
     </div>
-    <span class="clear-cat" onclick="resetCategories()">Reset to Default Categories</span>
+    
+    <button onclick="toggleDatabaseView()" id="viewDbBtn" style="background:none; color:var(--accent); font-size: 0.75rem; padding: 0; text-decoration: underline;">
+      🔧 Manage / Delete Items
+    </button>
+
+    <div id="masterFoodTags">
+      </div>
+  </div>
+
+  <div class="section">
+    <h3>🍽️ Daily Food Menu</h3>
+    <div class="meal-grid">
+      <div class="meal-item">
+        <span class="meal-label">Morning</span>
+        <select id="select-morn" class="meal-select" onchange="updateMeal('morn')"></select>
+      </div>
+      <div class="meal-item">
+        <span class="meal-label">Afternoon</span>
+        <select id="select-aft" class="meal-select" onchange="updateMeal('aft')"></select>
+      </div>
+      <div class="meal-item">
+        <span class="meal-label">Night</span>
+        <select id="select-nyt" class="meal-select" onchange="updateMeal('nyt')"></select>
+      </div>
+    </div>
   </div>
 
   <div class="section">
     <h3>Add Task</h3>
-    <input type="text" id="taskInput" placeholder="What needs doing?">
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="What's next?">
+      <button class="voice-btn" onclick="startVoice()">🎙️</button>
+    </div>
     <div style="display:flex; gap:5px;">
       <select id="taskCategory"></select>
       <input type="date" id="taskDate">
@@ -78,64 +129,79 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    
     let tasks = [];
-    let categories = ["Home", "Work", "Personal"];
-
+    let masterFoods = [];
+    let categories = ["Home", "Personal"];
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    // --- CORE DASHBOARD LOGIC ---
-    function toggleTheme() {
-      const newTheme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.body.setAttribute('data-theme', newTheme);
-      db.ref('dashboard/theme').set(newTheme);
+    // --- MASTER FOOD DATABASE LOGIC ---
+    function addMasterFood() {
+      const val = document.getElementById('masterFoodInput').value.trim();
+      if (val && !masterFoods.includes(val)) {
+        masterFoods.push(val);
+        db.ref('dashboard/masterFoods').set(masterFoods);
+        document.getElementById('masterFoodInput').value = "";
+      }
     }
 
-    function requestNotif() {
-      Notification.requestPermission().then(p => { if(p==='granted') new Notification("Reminders Active!"); });
+    function deleteMasterFood(index) {
+      if(confirm(`Delete "${masterFoods[index]}" from database?`)) {
+        masterFoods.splice(index, 1);
+        db.ref('dashboard/masterFoods').set(masterFoods);
+      }
     }
 
-    // --- DATA HANDLING ---
+    function toggleDatabaseView() {
+      const container = document.getElementById('masterFoodTags');
+      const btn = document.getElementById('viewDbBtn');
+      if (container.style.display === "block") {
+        container.style.display = "none";
+        btn.innerText = "🔧 Manage / Delete Items";
+      } else {
+        container.style.display = "block";
+        btn.innerText = "✖ Close Management View";
+      }
+    }
+
+    // --- MEAL UPDATES ---
+    function updateMeal(timeOfDay) {
+      const val = document.getElementById(`select-${timeOfDay}`).value;
+      db.ref(`dashboard/meals/${timeOfDay}`).set(val);
+    }
+
+    // --- DATA SYNC ---
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
+      
+      // Update Master Food Data
+      masterFoods = data.masterFoods || [];
+      
+      // Render the hidden deletion list
+      const tagContainer = document.getElementById('masterFoodTags');
+      tagContainer.innerHTML = masterFoods.map((f, i) => `
+        <div class="food-delete-item">
+          <span>${f}</span>
+          <button onclick="deleteMasterFood(${i})" style="color:#ff4d4d; background:none;">Delete</button>
+        </div>
+      `).join('');
+
+      // Update the 3 Dropdowns
+      ['morn', 'aft', 'nyt'].forEach(time => {
+        const select = document.getElementById(`select-${time}`);
+        const currentVal = (data.meals && data.meals[time]) ? data.meals[time] : "";
+        let options = `<option value="">-- Select --</option>`;
+        options += masterFoods.map(f => `<option value="${f}" ${f === currentVal ? 'selected' : ''}>${f}</option>`).join('');
+        select.innerHTML = options;
+      });
+
       if (data.theme) document.body.setAttribute('data-theme', data.theme);
       tasks = data.tasks || [];
-      categories = data.categories || ["Home", "Work", "Personal"];
+      categories = data.categories || ["Home", "Personal"];
       render();
     });
 
-    function addCategory() {
-      const val = document.getElementById('newCatInput').value.trim();
-      if (val && !categories.includes(val)) {
-        categories.push(val);
-        db.ref('dashboard/categories').set(categories);
-        document.getElementById('newCatInput').value = "";
-      }
-    }
-
-    function resetCategories() {
-      if(confirm("Reset to Home, Work, and Personal?")) {
-        db.ref('dashboard/categories').set(["Home", "Work", "Personal"]);
-      }
-    }
-
-    function addTask() {
-      const text = document.getElementById('taskInput').value;
-      const cat = document.getElementById('taskCategory').value;
-      const date = document.getElementById('taskDate').value;
-      const time = document.getElementById('taskTime').value;
-      if (!text) return;
-
-      tasks.push({ text, cat, date, time, done: false, notified: false });
-      db.ref('dashboard/tasks').set(tasks);
-      document.getElementById('taskInput').value = "";
-    }
-
-    function deleteTask(i) {
-      tasks.splice(i, 1);
-      db.ref('dashboard/tasks').set(tasks);
-    }
-
-    // --- FORMATTING ---
+    // --- DASHBOARD HELPERS ---
     function formatTime12h(timeStr) {
       if (!timeStr) return "";
       let [h, m] = timeStr.split(':');
@@ -150,65 +216,74 @@
       return `${parseInt(d)}-${months[parseInt(m)-1]}`;
     }
 
-    // --- RENDER UI ---
-    function render() {
-      // Update the dropdown for adding tasks
-      const select = document.getElementById('taskCategory');
-      select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    function updateGreeting() {
+      const hrs = new Date().getHours();
+      let greet = (hrs < 12) ? "Good Morning!" : (hrs < 17) ? "Good Afternoon!" : "Good Evening!";
+      document.getElementById('greeting').innerText = greet;
+    }
 
-      // Build category sections
+    async function fetchWeather() {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+        const data = await res.json();
+        document.getElementById('weather').innerText = `🌡️ ${data.current_weather.temperature}°C • Local Weather`;
+      }, () => { document.getElementById('weather').innerText = "Location off"; });
+    }
+
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.onresult = (e) => document.getElementById('taskInput').value = e.results[0][0].transcript;
+      recognition.start();
+    }
+
+    function addTask() {
+      const text = document.getElementById('taskInput').value;
+      const cat = document.getElementById('taskCategory').value;
+      const date = document.getElementById('taskDate').value;
+      const time = document.getElementById('taskTime').value;
+      if (!text) return;
+      tasks.push({ text, cat, date, time, done: false, notified: false });
+      db.ref('dashboard/tasks').set(tasks);
+      document.getElementById('taskInput').value = "";
+    }
+
+    function render() {
+      document.getElementById('taskCategory').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
       const container = document.getElementById('categoriesContainer');
       container.innerHTML = "";
-      
       categories.forEach(cat => {
         const div = document.createElement('div');
         div.className = "section";
         div.innerHTML = `<h3>${cat}</h3><ul id="list-${cat}"></ul>`;
         container.appendChild(div);
-
-        const list = div.querySelector('ul');
         tasks.filter(t => t.cat === cat).forEach((t) => {
-          const actualIndex = tasks.indexOf(t);
+          const idx = tasks.indexOf(t);
           const li = document.createElement('li');
-          
-          const friendlyDate = formatDateFriendly(t.date);
-          const friendlyTime = formatTime12h(t.time);
-          const metaString = (friendlyDate || friendlyTime) ? `• ${friendlyDate} ${friendlyTime}` : "";
-
+          const meta = (t.date || t.time) ? `${formatDateFriendly(t.date)} ${formatTime12h(t.time)}` : "";
           li.innerHTML = `
             <input type="checkbox" ${t.done ? 'checked' : ''}>
             <div class="task-info">
-              <span class="task-text" style="${t.done ? 'text-decoration:line-through; opacity: 0.5;' : ''}">${t.text}</span>
-              <span class="task-meta">${metaString}</span>
+              <span style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
+              <span class="task-meta">${meta}</span>
             </div>
-            <button class="del-btn" onclick="deleteTask(${actualIndex})">&times;</button>
+            <button class="del-btn" onclick="deleteTask(${idx})">&times;</button>
           `;
-          li.querySelector('input').onclick = () => {
-            tasks[actualIndex].done = !tasks[actualIndex].done;
-            db.ref('dashboard/tasks').set(tasks);
-          };
-          list.appendChild(li);
+          li.querySelector('input').onclick = () => { tasks[idx].done = !tasks[idx].done; db.ref('dashboard/tasks').set(tasks); };
+          div.querySelector('ul').appendChild(li);
         });
       });
     }
 
-    // --- NOTIFICATION ENGINE ---
-    setInterval(() => {
-      const now = new Date();
-      // Adjust curDate to local YYYY-MM-DD
-      const curDate = now.toLocaleDateString('en-CA'); 
-      const curTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-
-      tasks.forEach((t, i) => {
-        if (!t.done && !t.notified && t.date === curDate && t.time === curTime) {
-          if (Notification.permission === "granted") {
-            new Notification("⏰ Task Reminder", { body: t.text });
-            tasks[i].notified = true;
-            db.ref('dashboard/tasks').set(tasks);
-          }
-        }
-      });
-    }, 15000);
+    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
+    function toggleTheme() {
+      const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', next);
+      db.ref('dashboard/theme').set(next);
+    }
+    
+    updateGreeting();
+    fetchWeather();
   </script>
 </body>
 </html>
