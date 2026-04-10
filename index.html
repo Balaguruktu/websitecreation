@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Dashboard</title>
+  <title>Smart Home Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root { --bg: #f4f4f9; --text: #333; --card: #ffffff; --accent: #3498db; }
@@ -16,15 +16,15 @@
     
     input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; background: var(--card); color: var(--text); }
     
-    .category-box { display: flex; gap: 5px; margin-bottom: 10px; }
-    .category-box input { flex-grow: 1; }
-
     ul { list-style: none; padding: 0; }
-    li { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); }
-    li input[type="checkbox"] { width: auto; margin-right: 15px; }
+    li { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); cursor: pointer; }
     
-    .time-tag { font-size: 0.8em; color: #e74c3c; font-weight: bold; margin-left: 10px; }
-    .del-btn { margin-left: auto; background:none; color:#ff4d4d; font-size:20px; }
+    .task-info { flex-grow: 1; display: flex; flex-direction: column; }
+    .task-text { font-size: 1.05rem; font-weight: 500; }
+    .task-meta { font-size: 0.8rem; color: #e74c3c; margin-top: 3px; font-weight: bold; }
+    
+    .del-btn { background:none; color:#ff4d4d; font-size:22px; padding: 0 10px; cursor: pointer; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -37,14 +37,6 @@
   <div class="section">
     <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark/Light Mode</button>
     <button onclick="requestNotif()" style="width:100%; background:#9b59b6; color:white;">🔔 Enable Notifications</button>
-  </div>
-
-  <div class="section">
-    <h3>Manage Categories</h3>
-    <div class="category-box">
-      <input type="text" id="newCatInput" placeholder="New Category Name (e.g. Gym)">
-      <button onclick="addCategory()" style="background:#3498db; color:white;">Add</button>
-    </div>
   </div>
 
   <div class="section">
@@ -66,7 +58,7 @@
       authDomain: "mydashboard-7ace0.firebaseapp.com",
       databaseURL: "https://mydashboard-7ace0-default-rtdb.asia-southeast1.firebasedatabase.app/", 
       projectId: "mydashboard-7ace0",
-      storageBucket: "mydashboard-7ace0.firebasestorage.app",
+      storageBucket: "mydashboard-7ace0.firebaseastorage.app",
       messagingSenderId: "66001498071",
       appId: "1:66001498071:web:b28d7e058b99bdd0bfe592"
     };
@@ -76,7 +68,8 @@
     let tasks = [];
     let categories = ["Home", "Work", "Personal"];
 
-    // Theme & Notifs
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
     function toggleTheme() {
       const newTheme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       document.body.setAttribute('data-theme', newTheme);
@@ -84,10 +77,25 @@
     }
 
     function requestNotif() {
-      Notification.requestPermission().then(p => { if(p==='granted') new Notification("Alerts Active!"); });
+      Notification.requestPermission().then(p => { if(p==='granted') new Notification("Reminders Active!"); });
     }
 
-    // Sync
+    // --- FORMATTING HELPERS ---
+    function formatTime12h(timeStr) {
+      if (!timeStr) return "";
+      let [h, m] = timeStr.split(':');
+      let ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
+    function formatDateFriendly(dateStr) {
+      if (!dateStr) return "";
+      const [y, m, d] = dateStr.split('-');
+      return `${parseInt(d)}-${months[parseInt(m)-1]}`;
+    }
+
+    // --- DATA SYNC ---
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
       if (data.theme) document.body.setAttribute('data-theme', data.theme);
@@ -96,22 +104,11 @@
       render();
     });
 
-    // logic
-    function addCategory() {
-      const val = document.getElementById('newCatInput').value.trim();
-      if (val && !categories.includes(val)) {
-        categories.push(val);
-        db.ref('dashboard/categories').set(categories);
-        document.getElementById('newCatInput').value = "";
-      }
-    }
-
     function addTask() {
       const text = document.getElementById('taskInput').value;
       const cat = document.getElementById('taskCategory').value;
       const date = document.getElementById('taskDate').value;
       const time = document.getElementById('taskTime').value;
-
       if (!text) return;
 
       tasks.push({ text, cat, date, time, done: false, notified: false });
@@ -119,12 +116,13 @@
       document.getElementById('taskInput').value = "";
     }
 
-    function render() {
-      // Update Dropdown
-      const select = document.getElementById('taskCategory');
-      select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    function deleteTask(i) {
+      tasks.splice(i, 1);
+      db.ref('dashboard/tasks').set(tasks);
+    }
 
-      // Update Categories
+    function render() {
+      document.getElementById('taskCategory').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
       const container = document.getElementById('categoriesContainer');
       container.innerHTML = "";
       
@@ -135,13 +133,20 @@
         container.appendChild(div);
 
         const list = div.querySelector('ul');
-        tasks.filter(t => t.cat === cat).forEach((t, i) => {
+        tasks.filter(t => t.cat === cat).forEach((t) => {
           const actualIndex = tasks.indexOf(t);
           const li = document.createElement('li');
+          
+          const friendlyDate = formatDateFriendly(t.date);
+          const friendlyTime = formatTime12h(t.time);
+          const metaString = (friendlyDate || friendlyTime) ? `• ${friendlyDate} ${friendlyTime}` : "";
+
           li.innerHTML = `
             <input type="checkbox" ${t.done ? 'checked' : ''}>
-            <span style="${t.done ? 'text-decoration:line-through' : ''}">${t.text}</span>
-            <span class="time-tag">${t.time || ''}</span>
+            <div class="task-info">
+              <span class="task-text" style="${t.done ? 'text-decoration:line-through; opacity: 0.5;' : ''}">${t.text}</span>
+              <span class="task-meta">${metaString}</span>
+            </div>
             <button class="del-btn" onclick="deleteTask(${actualIndex})">&times;</button>
           `;
           li.querySelector('input').onclick = () => {
@@ -153,27 +158,22 @@
       });
     }
 
-    function deleteTask(i) {
-      tasks.splice(i, 1);
-      db.ref('dashboard/tasks').set(tasks);
-    }
-
-    // Notification Checker Engine
+    // --- NOTIFICATION ENGINE ---
     setInterval(() => {
       const now = new Date();
       const curDate = now.toISOString().split('T')[0];
-      const curTime = now.toTimeString().split(' ')[0].substring(0, 5); // "HH:MM"
+      const curTime = now.toTimeString().split(' ')[0].substring(0, 5);
 
       tasks.forEach((t, i) => {
         if (!t.done && !t.notified && t.date === curDate && t.time === curTime) {
           if (Notification.permission === "granted") {
-            new Notification("Task Reminder!", { body: t.text });
+            new Notification("⏰ Dashboard Reminder", { body: t.text });
             tasks[i].notified = true;
             db.ref('dashboard/tasks').set(tasks);
           }
         }
       });
-    }, 30000); // Check every 30 seconds
+    }, 15000);
   </script>
 </body>
 </html>
