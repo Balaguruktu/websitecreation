@@ -1,34 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My Home Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <style>
+  <meta charset="UTF-8">
+  <title>My Shared Home Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       margin: 0;
       padding: 20px;
-      /* CHANGE THE URL BELOW TO YOUR IMAGE */
       background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80');
       background-size: cover;
       background-position: center;
-      background-attachment: fixed; /* Keeps background still while scrolling */
+      background-attachment: fixed;
       background-repeat: no-repeat;
       min-height: 100vh;
     }
 
-    /* semi-transparent overlay to make sections readable */
     .section { 
       margin-bottom: 30px; 
-      background: rgba(255, 255, 255, 0.9); /* 90% white so background shows through slightly */
+      background: rgba(255, 255, 255, 0.9); 
       padding: 15px; 
       border-radius: 12px; 
       box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-      backdrop-filter: blur(5px); /* Blurs the background behind the card */
+      backdrop-filter: blur(5px);
     }
 
     h1 { text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
     
-    /* Mobile optimization: make inputs full width on small screens */
     input[type="text"], select, input[type="date"], textarea { 
       width: 100%; 
       margin-bottom: 10px; 
@@ -49,9 +48,7 @@
     }
 
     button:hover { background: #555; }
-
     .del-cat-btn { background-color: #ff4d4d; color: white; float: right; }
-    
     .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     
     li { 
@@ -64,45 +61,34 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    .overdue { color: #d9534f !important; font-weight: bold; }
-    progress { width: 100%; height: 12px; border-radius: 10px; }
+    progress { width: 100%; height: 12px; border-radius: 10px; margin-bottom: 10px; }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
-  <h1>My Home Dashboard</h1>
+  <h1>My Shared Dashboard</h1>
 
   <div class="section">
-    <h2>Notes</h2>
-    <textarea id="notes" placeholder="Write your notes here..."></textarea>
+    <h2>Shared Notes</h2>
+    <textarea id="notes" placeholder="Type here to sync notes across all devices..."></textarea>
   </div>
 
   <div class="section">
-    <h2>Summary</h2>
-    <p id="summaryText">No tasks yet.</p>
+    <h2>Live Summary</h2>
+    <p id="summaryText">Connecting to cloud...</p>
   </div>
 
   <div class="section">
-    <h2>Filters & Search</h2>
-    <input type="text" id="searchInput" placeholder="Search tasks...">
-    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-      <button onclick="showAll()">All</button>
-      <button onclick="showOverdue()">Overdue</button>
-      <button onclick="showCompleted()">Done</button>
-      <button onclick="showUpcoming()">Upcoming</button>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Manage Categories</h2>
-    <input type="text" id="newCategoryInput" placeholder="New category name">
-    <button onclick="addCategory()">Add Category</button>
-  </div>
-
-  <div class="section">
-    <h2>Add Task</h2>
+    <h2>Add New Task</h2>
     <input type="text" id="taskInput" placeholder="Task description">
-    <select id="taskCategory"></select>
+    <select id="taskCategory">
+        <option value="Home">Home</option>
+        <option value="Work">Work</option>
+        <option value="Personal">Personal</option>
+    </select>
     <input type="date" id="taskDate">
     <button onclick="addTask()" style="width: 100%; background: #28a745;">Add Task</button>
   </div>
@@ -110,34 +96,55 @@
   <div id="categoriesSection"></div>
 
   <script>
-    // --- JS LOGIC (Same as before but with minor fixes for data persistence) ---
+    // --- YOUR FIREBASE CONFIG FROM SCREENSHOT ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBK8WyG6Ax3tRRq9sPBol-e9LDSiwB9JZE",
+      authDomain: "mydashboard-7ace0.firebaseapp.com",
+      // Note: Updated with the standard URL format for your project ID
+      databaseURL: "https://mydashboard-7ace0-default-rtdb.firebaseio.com", 
+      projectId: "mydashboard-7ace0",
+      storageBucket: "mydashboard-7ace0.firebasestorage.app",
+      messagingSenderId: "66001498071",
+      appId: "1:66001498071:web:b28d7e058b99bdd0bfe592"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let categories = ["Home", "Work", "Personal"];
+    let savedTasks = [];
+    let categoryColors = { Home: "#2d6a4f", Work: "#1d3557", Personal: "#e67e22" };
+
     const notesBox = document.getElementById("notes");
-    notesBox.value = localStorage.getItem("myNotes") || "";
-    notesBox.addEventListener("input", () => localStorage.setItem("myNotes", notesBox.value));
 
-    let categories = JSON.parse(localStorage.getItem("myCategories")) || ["Home", "Work", "Personal"];
-    let savedTasks = JSON.parse(localStorage.getItem("myTasks")) || [];
-    let defaultColors = { Home: "#2d6a4f", Work: "#1d3557", Personal: "#e67e22" };
-    let categoryColors = JSON.parse(localStorage.getItem("categoryColors")) || defaultColors;
-
-    document.getElementById("searchInput").addEventListener("input", () => {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = savedTasks.filter(t => t.text.toLowerCase().includes(query));
-      rebuildLists(filtered);
+    // --- REAL-TIME SYNC ENGINE ---
+    // This listens for any changes in the database and updates all screens
+    db.ref('dashboard').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        savedTasks = data.tasks || [];
+        notesBox.value = data.notes || "";
+        
+        renderCategories();
+        rebuildLists();
+      }
     });
+
+    // Save notes as you type
+    notesBox.addEventListener("input", () => {
+      db.ref('dashboard/notes').set(notesBox.value);
+    });
+
+    function saveData() {
+      db.ref('dashboard/tasks').set(savedTasks);
+    }
 
     function renderCategories() {
       const section = document.getElementById("categoriesSection");
-      const select = document.getElementById("taskCategory");
       section.innerHTML = "";
-      select.innerHTML = "";
 
       categories.forEach(cat => {
-        const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
-        select.appendChild(opt);
-
         const catDiv = document.createElement("div");
         catDiv.className = "section";
         const color = categoryColors[cat] || "#333";
@@ -145,7 +152,6 @@
         catDiv.innerHTML = `
           <div class="cat-header">
             <h3 style="color:${color}; margin: 0;">${cat}</h3>
-            <button class="del-cat-btn" onclick="deleteCategory('${cat}')">Delete</button>
           </div>
           <progress id="${cat.toLowerCase()}Progress" value="0" max="100"></progress>
           <ul id="${cat.toLowerCase()}List"></ul>
@@ -154,127 +160,78 @@
       });
     }
 
-    function addCategory() {
-      const input = document.getElementById("newCategoryInput");
-      const newCat = input.value.trim();
-      if (newCat && !categories.includes(newCat)) {
-        const pickedColor = prompt("Pick a color (hex or name):", "#333");
-        categories.push(newCat);
-        categoryColors[newCat] = pickedColor || "#333";
-        saveData();
-        renderCategories();
-        rebuildLists();
-        input.value = "";
-      }
-    }
-
-    function deleteCategory(catName) {
-      if (confirm(`Delete category "${catName}"?`)) {
-        categories = categories.filter(c => c !== catName);
-        savedTasks = savedTasks.filter(t => t.category !== catName);
-        saveData();
-        renderCategories();
-        rebuildLists();
-      }
-    }
-
     function addTask() {
       const input = document.getElementById("taskInput");
       const category = document.getElementById("taskCategory").value;
       const date = document.getElementById("taskDate").value;
       const taskText = input.value.trim();
 
-      if (taskText && category) {
+      if (taskText) {
         savedTasks.push({ text: taskText, done: false, category: category, date: date });
         saveData();
-        rebuildLists();
         input.value = "";
       }
     }
 
-    function saveData() {
-      localStorage.setItem("myCategories", JSON.stringify(categories));
-      localStorage.setItem("myTasks", JSON.stringify(savedTasks));
-      localStorage.setItem("categoryColors", JSON.stringify(categoryColors));
-    }
-
-    function rebuildLists(tasksToDisplay = savedTasks) {
+    function rebuildLists() {
       categories.forEach(cat => {
         const list = document.getElementById(cat.toLowerCase() + "List");
         if (list) list.innerHTML = "";
       });
-      tasksToDisplay.forEach(task => addTaskToList(task));
-      updateProgress();
-      updateSummary();
-    }
 
-    function addTaskToList(taskObj) {
-      const list = document.getElementById(taskObj.category.toLowerCase() + "List");
-      if (!list) return;
+      savedTasks.forEach((task, index) => {
+        const list = document.getElementById(task.category.toLowerCase() + "List");
+        if (!list) return;
 
-      const li = document.createElement("li");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = taskObj.done;
-      checkbox.style.marginRight = "10px";
+        const li = document.createElement("li");
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.style.marginRight = "10px";
+        checkbox.onclick = () => {
+          savedTasks[index].done = !savedTasks[index].done;
+          saveData();
+        };
 
-      const span = document.createElement("span");
-      span.textContent = `${taskObj.text} ${taskObj.date ? '(' + taskObj.date + ')' : ''}`;
-      span.style.color = categoryColors[taskObj.category] || "#333";
+        const span = document.createElement("span");
+        span.textContent = `${task.text} ${task.date ? '(' + task.date + ')' : ''}`;
+        if (task.done) span.style.textDecoration = "line-through";
 
-      if (taskObj.done) span.style.textDecoration = "line-through";
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "×";
+        delBtn.style.marginLeft = "auto";
+        delBtn.style.background = "none";
+        delBtn.style.color = "red";
+        delBtn.style.fontSize = "18px";
+        delBtn.onclick = () => {
+          savedTasks.splice(index, 1);
+          saveData();
+        };
 
-      checkbox.addEventListener("change", () => {
-        taskObj.done = checkbox.checked;
-        saveData();
-        rebuildLists();
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        list.appendChild(li);
       });
 
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "×";
-      delBtn.style.marginLeft = "auto";
-      delBtn.style.background = "none";
-      delBtn.style.color = "red";
-      delBtn.style.fontSize = "20px";
-      delBtn.onclick = () => {
-        savedTasks = savedTasks.filter(t => t !== taskObj);
-        saveData();
-        rebuildLists(); 
-      };
-
-      li.appendChild(checkbox);
-      li.appendChild(span);
-      li.appendChild(delBtn);
-      list.appendChild(li);
+      updateUIExtras();
     }
 
-    function updateProgress() {
+    function updateUIExtras() {
+      // Update Progress Bars
       categories.forEach(cat => {
         const catTasks = savedTasks.filter(t => t.category === cat);
         const done = catTasks.filter(t => t.done).length;
         const bar = document.getElementById(cat.toLowerCase() + "Progress");
         if (bar) bar.value = catTasks.length ? (done / catTasks.length) * 100 : 0;
       });
+
+      // Update Summary Text
+      const totalDone = savedTasks.filter(t => t.done).length;
+      document.getElementById("summaryText").textContent = `Total Tasks: ${savedTasks.length} | Completed: ${totalDone}`;
     }
 
-    function updateSummary() {
-      const done = savedTasks.filter(t => t.done).length;
-      document.getElementById("summaryText").textContent = `Tasks: ${savedTasks.length} | Completed: ${done}`;
-    }
-
-    function showAll() { rebuildLists(); }
-    function showOverdue() {
-        const today = new Date().toISOString().split('T')[0];
-        rebuildLists(savedTasks.filter(t => t.date && t.date < today && !t.done));
-    }
-    function showCompleted() { rebuildLists(savedTasks.filter(t => t.done)); }
-    function showUpcoming() {
-        const today = new Date().toISOString().split('T')[0];
-        rebuildLists(savedTasks.filter(t => (!t.date || t.date >= today) && !t.done));
-    }
-
-    renderCategories();
-    rebuildLists();
   </script>
 </body>
 </html>
