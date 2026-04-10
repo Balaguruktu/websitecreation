@@ -5,55 +5,105 @@
   <title>Smart Home Dashboard Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root { --bg: #f4f4f9; --text: #333; --card: #ffffff; --accent: #3498db; }
-    [data-theme="dark"] { --bg: #1a1a1a; --text: #f0f0f0; --card: #2d2d2d; --accent: #ff9f43; }
-    
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: var(--bg); color: var(--text); transition: 0.3s; }
-    .section { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    
-    .greeting { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; color: var(--accent); text-align: center; }
-    #weather { text-align: center; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; }
-    
-    /* Master Food List Management */
-    .master-food-manage { display: flex; gap: 8px; margin-bottom: 10px; }
-    #masterFoodTags { 
-      display: none; 
-      margin-top: 15px; 
-      padding-top: 15px; 
-      border-top: 1px solid rgba(0,0,0,0.1); 
+    :root { 
+      --bg-overlay: rgba(244, 244, 249, 0.8); 
+      --text: #333; 
+      --card: rgba(255, 255, 255, 0.7); 
+      --accent: #3498db; 
     }
-    .food-delete-item { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: 8px; 
-      background: rgba(0,0,0,0.03); 
-      margin-bottom: 5px; 
-      border-radius: 6px; 
+    [data-theme="dark"] { 
+      --bg-overlay: rgba(26, 26, 26, 0.85); 
+      --text: #f0f0f0; 
+      --card: rgba(45, 45, 45, 0.75); 
+      --accent: #ff9f43; 
+    }
+    
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      color: var(--text); 
+      transition: 0.3s;
+      background-image: url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
     }
 
-    /* Meal Dropdown Grid */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-overlay);
+      z-index: -1;
+      transition: 0.3s;
+    }
+
+    /* Small Theme Toggle in Left Corner */
+    .theme-toggle-container {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      z-index: 1000;
+    }
+
+    .theme-icon-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(5px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .theme-icon-btn:hover { transform: scale(1.1); }
+    
+    .section { 
+      background: var(--card); 
+      padding: 20px; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .greeting { font-size: 1.8rem; font-weight: bold; margin-bottom: 5px; color: var(--accent); text-align: center; }
+    #weather { text-align: center; font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; font-weight: 500; }
+    
+    .manage-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .manage-list { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); }
+    .manage-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.05); margin-bottom: 5px; border-radius: 8px; }
+
     .meal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
     .meal-item { display: flex; flex-direction: column; }
-    .meal-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: bold; margin-bottom: 8px; }
+    .meal-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: bold; margin-bottom: 8px; }
     
-    select.meal-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: var(--card); color: var(--text); font-weight: 500; cursor: pointer; }
+    select.meal-select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-weight: 500; cursor: pointer; }
 
-    button { padding: 10px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; transition: 0.2s; }
-    .theme-btn { background: var(--accent); color: white; width: 100%; margin-bottom: 10px; }
-    input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: var(--card); color: var(--text); }
+    button { padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; transition: 0.2s; }
+    input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; box-sizing: border-box; background: var(--card); color: var(--text); }
     
     .input-group { position: relative; display: flex; align-items: center; }
-    .voice-btn { position: absolute; right: 10px; background: none; font-size: 20px; color: var(--accent); }
+    .voice-btn { position: absolute; right: 10px; background: none; font-size: 20px; color: var(--accent); border: none; padding: 0; cursor: pointer; }
 
-    /* Task List Styling */
     ul { list-style: none; padding: 0; }
-    li { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.2); }
+    li { display: flex; align-items: center; padding: 14px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.3); cursor: pointer; }
     
-    .task-info { flex-grow: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; }
-    .task-meta { font-size: 0.8rem; color: #e74c3c; font-weight: bold; white-space: nowrap; }
-    .del-btn { background:none; color:#ff4d4d; font-size:22px; padding-left: 10px; }
+    .task-info { flex-grow: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+    .task-meta { font-size: 0.85rem; color: #e74c3c; font-weight: bold; white-space: nowrap; }
+    .del-btn { background:none; color:#ff4d4d; font-size:24px; padding: 0 0 0 15px; cursor: pointer; }
+    
+    .manage-toggle-btn { background:none; color:var(--accent); font-size: 0.8rem; padding: 0; text-decoration: underline; margin-top: 5px; display: block; text-align: left; cursor: pointer; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -61,25 +111,33 @@
 </head>
 <body data-theme="light">
 
-  <div class="section">
-    <div id="greeting" class="greeting">Hello!</div>
-    <div id="weather">Weather loading...</div>
-    <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark/Light Mode</button>
+  <div class="theme-toggle-container">
+    <button class="theme-icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
   </div>
 
   <div class="section">
-    <h3>📂 Master Food Database</h3>
-    <div class="master-food-manage">
-      <input type="text" id="masterFoodInput" placeholder="Add new dish to list...">
+    <div id="greeting" class="greeting">Hello!</div>
+    <div id="weather">Weather loading...</div>
+  </div>
+
+  <div class="section">
+    <h3>🍱 Master Food Database</h3>
+    <div class="manage-row">
+      <input type="text" id="masterFoodInput" placeholder="Add dish (e.g. Pasta, Dosa)...">
       <button onclick="addMasterFood()" style="background:var(--accent); color:white;">Add</button>
     </div>
-    
-    <button onclick="toggleDatabaseView()" id="viewDbBtn" style="background:none; color:var(--accent); font-size: 0.75rem; padding: 0; text-decoration: underline;">
-      🔧 Manage / Delete Items
-    </button>
+    <button onclick="toggleView('masterFoodTags', 'viewDbBtn')" id="viewDbBtn" class="manage-toggle-btn">🔧 Manage Food Items</button>
+    <div id="masterFoodTags" class="manage-list"></div>
+  </div>
 
-    <div id="masterFoodTags">
-      </div>
+  <div class="section">
+    <h3>🗂️ Manage Categories</h3>
+    <div class="manage-row">
+      <input type="text" id="categoryInput" placeholder="New category (e.g. Gym, Work)...">
+      <button onclick="addCategory()" style="background:var(--accent); color:white;">Add</button>
+    </div>
+    <button onclick="toggleView('categoryList', 'viewCatBtn')" id="viewCatBtn" class="manage-toggle-btn">🔧 Manage Categories</button>
+    <div id="categoryList" class="manage-list"></div>
   </div>
 
   <div class="section">
@@ -101,13 +159,13 @@
   </div>
 
   <div class="section">
-    <h3>Add Task</h3>
+    <h3>✍️ Add Task</h3>
     <div class="input-group">
       <input type="text" id="taskInput" placeholder="What's next?">
       <button class="voice-btn" onclick="startVoice()">🎙️</button>
     </div>
     <div style="display:flex; gap:5px;">
-      <select id="taskCategory"></select>
+      <select id="taskCategorySelect"></select>
       <input type="date" id="taskDate">
       <input type="time" id="taskTime">
     </div>
@@ -135,7 +193,26 @@
     let categories = ["Home", "Personal"];
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    // --- MASTER FOOD DATABASE LOGIC ---
+    function addCategory() {
+      const val = document.getElementById('categoryInput').value.trim();
+      if (val && !categories.includes(val)) {
+        categories.push(val);
+        db.ref('dashboard/categories').set(categories);
+        document.getElementById('categoryInput').value = "";
+      }
+    }
+
+    function deleteCategory(index) {
+      if(categories.length <= 1) return alert("Minimum one category required.");
+      if(confirm(`Delete "${categories[index]}" and its tasks?`)) {
+        const catName = categories[index];
+        categories.splice(index, 1);
+        tasks = tasks.filter(t => t.cat !== catName);
+        db.ref('dashboard/categories').set(categories);
+        db.ref('dashboard/tasks').set(tasks);
+      }
+    }
+
     function addMasterFood() {
       const val = document.getElementById('masterFoodInput').value.trim();
       if (val && !masterFoods.includes(val)) {
@@ -146,47 +223,45 @@
     }
 
     function deleteMasterFood(index) {
-      if(confirm(`Delete "${masterFoods[index]}" from database?`)) {
+      if(confirm(`Delete "${masterFoods[index]}"?`)) {
         masterFoods.splice(index, 1);
         db.ref('dashboard/masterFoods').set(masterFoods);
       }
     }
 
-    function toggleDatabaseView() {
-      const container = document.getElementById('masterFoodTags');
-      const btn = document.getElementById('viewDbBtn');
+    function toggleView(id, btnId) {
+      const container = document.getElementById(id);
+      const btn = document.getElementById(btnId);
+      const isFood = id === 'masterFoodTags';
       if (container.style.display === "block") {
         container.style.display = "none";
-        btn.innerText = "🔧 Manage / Delete Items";
+        btn.innerText = isFood ? "🔧 Manage Food Items" : "🔧 Manage Categories";
       } else {
         container.style.display = "block";
         btn.innerText = "✖ Close Management View";
       }
     }
 
-    // --- MEAL UPDATES ---
     function updateMeal(timeOfDay) {
       const val = document.getElementById(`select-${timeOfDay}`).value;
       db.ref(`dashboard/meals/${timeOfDay}`).set(val);
     }
 
-    // --- DATA SYNC ---
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
       
-      // Update Master Food Data
-      masterFoods = data.masterFoods || [];
+      categories = data.categories || ["Home", "Personal"];
+      document.getElementById('categoryList').innerHTML = categories.map((c, i) => `
+        <div class="manage-item"><span>${c}</span><button onclick="deleteCategory(${i})" style="color:#ff4d4d; background:none;">Delete</button></div>
+      `).join('');
       
-      // Render the hidden deletion list
-      const tagContainer = document.getElementById('masterFoodTags');
-      tagContainer.innerHTML = masterFoods.map((f, i) => `
-        <div class="food-delete-item">
-          <span>${f}</span>
-          <button onclick="deleteMasterFood(${i})" style="color:#ff4d4d; background:none;">Delete</button>
-        </div>
+      document.getElementById('taskCategorySelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      masterFoods = data.masterFoods || [];
+      document.getElementById('masterFoodTags').innerHTML = masterFoods.map((f, i) => `
+        <div class="manage-item"><span>${f}</span><button onclick="deleteMasterFood(${i})" style="color:#ff4d4d; background:none;">Delete</button></div>
       `).join('');
 
-      // Update the 3 Dropdowns
       ['morn', 'aft', 'nyt'].forEach(time => {
         const select = document.getElementById(`select-${time}`);
         const currentVal = (data.meals && data.meals[time]) ? data.meals[time] : "";
@@ -197,11 +272,9 @@
 
       if (data.theme) document.body.setAttribute('data-theme', data.theme);
       tasks = data.tasks || [];
-      categories = data.categories || ["Home", "Personal"];
       render();
     });
 
-    // --- DASHBOARD HELPERS ---
     function formatTime12h(timeStr) {
       if (!timeStr) return "";
       let [h, m] = timeStr.split(':');
@@ -239,7 +312,7 @@
 
     function addTask() {
       const text = document.getElementById('taskInput').value;
-      const cat = document.getElementById('taskCategory').value;
+      const cat = document.getElementById('taskCategorySelect').value;
       const date = document.getElementById('taskDate').value;
       const time = document.getElementById('taskTime').value;
       if (!text) return;
@@ -249,7 +322,6 @@
     }
 
     function render() {
-      document.getElementById('taskCategory').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
       const container = document.getElementById('categoriesContainer');
       container.innerHTML = "";
       categories.forEach(cat => {
@@ -264,12 +336,12 @@
           li.innerHTML = `
             <input type="checkbox" ${t.done ? 'checked' : ''}>
             <div class="task-info">
-              <span style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
+              <span style="${t.done ? 'text-decoration:line-through; opacity:0.6' : ''}">${t.text}</span>
               <span class="task-meta">${meta}</span>
             </div>
             <button class="del-btn" onclick="deleteTask(${idx})">&times;</button>
           `;
-          li.querySelector('input').onclick = () => { tasks[idx].done = !tasks[idx].done; db.ref('dashboard/tasks').set(tasks); };
+          li.querySelector('input').onchange = () => { tasks[idx].done = !tasks[idx].done; db.ref('dashboard/tasks').set(tasks); };
           div.querySelector('ul').appendChild(li);
         });
       });
