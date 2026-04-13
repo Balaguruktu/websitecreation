@@ -157,7 +157,6 @@
     const db = firebase.database();
     let tasks = [], categories = [], masterFoods = [];
 
-    // --- Weather Logic Fixed ---
     async function syncWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current_weather=true');
@@ -171,7 +170,7 @@
     db.ref('dashboard/weather').on('value', (s) => {
       const val = s.val();
       if (val) document.getElementById('temp').innerText = val + "°";
-      else syncWeather(); // Fetch if Firebase node is empty
+      else syncWeather();
     });
 
     function toggleVisibility(id) {
@@ -204,7 +203,11 @@
       const text = document.getElementById('taskIn').value.trim();
       if (!text) return;
       tasks.push({ text, cat: document.getElementById('taskCatSelect').value, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
-      db.ref('dashboard/tasks').set(tasks).then(() => document.getElementById('taskIn').value = "");
+      db.ref('dashboard/tasks').set(tasks).then(() => {
+        document.getElementById('taskIn').value = "";
+        document.getElementById('taskD').value = "";
+        document.getElementById('taskT').value = "";
+      });
     }
 
     function editTask(i, newText) { if(tasks[i].text !== newText) { tasks[i].text = newText; db.ref('dashboard/tasks').set(tasks); } }
@@ -226,11 +229,13 @@
         cont.appendChild(div);
         tasks.filter(t => t.cat === cat).forEach((t) => {
           const idx = tasks.indexOf(t);
+          // Logic to show both Date and Time if they exist
+          const dateTimeDisplay = [t.date, t.time].filter(Boolean).join(' | ');
           div.querySelector('div').innerHTML += `
             <div class="task-item">
               <input type="checkbox" style="width:auto; margin-right:15px;" ${t.done?'checked':''} onchange="toggleDone(${idx})">
               <div class="task-text" contenteditable="true" onblur="editTask(${idx}, this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
-              <small style="opacity:0.5; margin-right:10px;">${t.time || ''}</small>
+              <small style="opacity:0.5; margin-right:10px;">${dateTimeDisplay}</small>
               <button onclick="deleteTask(${idx})" class="btn-del">&times;</button>
             </div>`;
         });
