@@ -181,10 +181,13 @@
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
       categories = data.categories || ["Home"];
-      masterFoods = data.masterFoods || [];
+      // Sorting master foods alphabetically when data is received
+      masterFoods = (data.masterFoods || []).sort((a, b) => a.localeCompare(b));
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
 
       document.getElementById('taskCatSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      
+      // Dropdown list now follows the sorted masterFoods array
       const opts = `<option value="">Select...</option>` + masterFoods.map(f => `<option value="${f}">${f}</option>`).join('');
       ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).innerHTML = opts);
 
@@ -194,7 +197,17 @@
       updateProgress(); renderTasks(); loadMealData();
     });
 
-    function addFood() { const v = document.getElementById('foodIn').value.trim(); if(v){masterFoods.push(v); db.ref('dashboard/masterFoods').set(masterFoods); document.getElementById('foodIn').value="";} }
+    function addFood() { 
+      const v = document.getElementById('foodIn').value.trim(); 
+      if(v){
+        masterFoods.push(v); 
+        // Sort before saving to keep database clean
+        masterFoods.sort((a, b) => a.localeCompare(b));
+        db.ref('dashboard/masterFoods').set(masterFoods); 
+        document.getElementById('foodIn').value="";
+      } 
+    }
+    
     function delFood(i) { masterFoods.splice(i,1); db.ref('dashboard/masterFoods').set(masterFoods); }
     function addCat() { const v = document.getElementById('catIn').value.trim(); if(v){categories.push(v); db.ref('dashboard/categories').set(categories); document.getElementById('catIn').value="";} }
     function delCat(i) { categories.splice(i,1); db.ref('dashboard/categories').set(categories); }
@@ -229,7 +242,6 @@
         cont.appendChild(div);
         tasks.filter(t => t.cat === cat).forEach((t) => {
           const idx = tasks.indexOf(t);
-          // Logic to show both Date and Time if they exist
           const dateTimeDisplay = [t.date, t.time].filter(Boolean).join(' | ');
           div.querySelector('div').innerHTML += `
             <div class="task-item">
