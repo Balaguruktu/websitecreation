@@ -24,7 +24,16 @@
       font-family: 'Plus Jakarta Sans', sans-serif; 
       margin: 0; min-height: 100vh; color: var(--text); transition: 0.4s;
       background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80') center/cover fixed;
-      display: flex; justify-content: center;
+      display: flex; flex-direction: row;
+    }
+
+    /* Responsive Layout */
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .sidebar { width: auto !important; margin: 10px !important; position: static !important; }
+      .main-content { padding: 10px !important; }
+      .task-grid { grid-template-columns: 1fr !important; }
+      .meal-grid { grid-template-columns: 1fr !important; }
     }
 
     .sidebar {
@@ -36,7 +45,7 @@
       position: sticky; top: 20px; overflow-y: auto;
     }
 
-    .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; }
+    .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; width: 100%; box-sizing: border-box; }
 
     .section { 
       background: var(--glass); backdrop-filter: blur(20px);
@@ -44,44 +53,21 @@
       box-shadow: var(--card-shadow); margin-bottom: 25px;
     }
 
-    /* Management UI */
-    .mgmt-card { margin-top: 10px; }
+    /* UI Components */
+    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .mgmt-label { font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
-    .add-row { display: flex; gap: 8px; }
-    
-    .view-btn { 
-      background: none; border: none; color: var(--accent); 
-      font-weight: 800; font-size: 0.65rem; cursor: pointer; text-transform: uppercase;
-    }
-
-    .db-list { 
-      max-height: 150px; overflow-y: auto; border-radius: 12px; 
-      background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px;
-    }
-
+    .mgmt-label { font-size: 0.85rem; font-weight: 800; }
+    .db-list { max-height: 150px; overflow-y: auto; border-radius: 12px; background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px; }
     .db-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; font-size: 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
     
-    input, select {
-      padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border);
-      background: rgba(255,255,255,0.2); color: var(--text); width: 100%;
-      font-family: inherit; font-size: 0.8rem;
-    }
+    input, select { padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.2); color: var(--text); font-family: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+    .btn-add { padding: 10px 18px; border-radius: 12px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 800; }
+    .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
 
-    .btn-add { padding: 8px 14px; border-radius: 10px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 800; }
-    .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 1rem; }
+    .task-item { display: flex; align-items: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 18px; margin-bottom: 10px; }
+    .task-text { flex: 1; padding: 4px 8px; cursor: text; font-size: 1rem; }
+    .task-text:focus { background: rgba(0,0,0,0.05); outline: none; border-radius: 8px; }
 
-    /* Task Styles with Editing support */
-    .task-item {
-      display: flex; align-items: center; padding: 12px; 
-      background: rgba(255,255,255,0.05); border-radius: 15px; margin-bottom: 8px;
-      transition: 0.2s;
-    }
-    .task-text { flex: 1; padding: 4px 8px; border-radius: 6px; cursor: text; }
-    .task-text:focus { background: rgba(0,0,0,0.05); outline: none; }
-    .task-text[contenteditable="true"]:empty:before { content: "Enter task..."; opacity: 0.4; }
-
-    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .progress-ring { width: 50px; height: 50px; transform: rotate(-90deg); }
     .progress-ring-circle { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: 0.4s; }
   </style>
@@ -93,53 +79,41 @@
 
   <div class="sidebar">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button style="width:32px; height:32px; border-radius:8px; border:1px solid var(--glass-border); background:var(--glass); cursor:pointer;" onclick="toggleTheme()">🌓</button>
-      <div id="greeting" style="font-weight: 800; font-size: 1.2rem;">Morning!</div>
+      <button style="width:36px; height:36px; border-radius:10px; border:1px solid var(--glass-border); background:var(--glass); cursor:pointer;" onclick="toggleTheme()">🌓</button>
+      <div id="greeting" style="font-weight: 800; font-size: 1.2rem;">Hello!</div>
     </div>
     
     <div class="status-container">
       <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent);">--°</div>
-      <div style="display: flex; align-items: center; gap: 15px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
         <svg class="progress-ring"><circle class="progress-ring-circle" id="circle" r="20" cx="25" cy="25" stroke-dasharray="125" stroke-dashoffset="125"></circle></svg>
-        <span style="font-size: 0.7rem; font-weight: 800;" id="progressText">0% Done</span>
+        <span style="font-size: 0.75rem; font-weight: 800;" id="progressText">0% Done</span>
       </div>
     </div>
 
     <hr style="opacity: 0.1; width: 100%; margin: 5px 0;">
-    <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px;">Manage Databases</div>
+    <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.4; text-transform: uppercase;">Management</div>
 
     <div class="mgmt-card">
-      <div class="mgmt-header">
-        <span class="mgmt-label">🍱 Food Master</span>
-        <button class="view-btn" onclick="toggleVisibility('foodList')">View All</button>
-      </div>
-      <div class="add-row">
-        <input type="text" id="foodIn" placeholder="Add dish...">
-        <button class="btn-add" onclick="addFood()">Add</button>
-      </div>
+      <div class="mgmt-header"><span class="mgmt-label">🍱 Food Master</span><button class="view-btn" style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('foodList')">VIEW ALL</button></div>
+      <div style="display: flex; gap: 8px;"><input type="text" id="foodIn" placeholder="Add..."><button class="btn-add" onclick="addFood()">+</button></div>
       <div id="foodList" class="db-list"></div>
     </div>
 
     <div class="mgmt-card">
-      <div class="mgmt-header">
-        <span class="mgmt-label">🗂️ Categories</span>
-        <button class="view-btn" onclick="toggleVisibility('catList')">View All</button>
-      </div>
-      <div class="add-row">
-        <input type="text" id="catIn" placeholder="Add group...">
-        <button class="btn-add" onclick="addCat()">Add</button>
-      </div>
+      <div class="mgmt-header"><span class="mgmt-label">🗂️ Categories</span><button class="view-btn" style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('catList')">VIEW ALL</button></div>
+      <div style="display: flex; gap: 8px;"><input type="text" id="catIn" placeholder="Add..."><button class="btn-add" onclick="addCat()">+</button></div>
       <div id="catList" class="db-list"></div>
     </div>
   </div>
 
   <div class="main-content">
     <div class="section">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin:0; font-weight: 800;">🍽️ Daily Meal Planner</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin:0; font-weight: 800;">🍽️ Meal Planner</h3>
         <input type="date" id="mealDate" onchange="loadMealData()" style="width: auto;">
       </div>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+      <div class="meal-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
         <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
           <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">MORNING</small>
           <select id="select-morn" onchange="updateMeal('morn')"></select>
@@ -157,12 +131,12 @@
 
     <div class="section">
       <h3 style="margin-top:0; font-weight: 800;">✍️ Quick Add Task</h3>
-      <div style="display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr auto; gap: 10px;">
+      <div class="task-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px;">
         <input type="text" id="taskIn" placeholder="Task name...">
         <select id="taskCatSelect"></select>
         <input type="date" id="taskD">
         <input type="time" id="taskT">
-        <button onclick="addTask()" style="background:var(--accent); color:white; border:none; padding:10px 18px; border-radius:10px; font-weight:800; cursor:pointer;">Add</button>
+        <button onclick="addTask()" class="btn-add">Add Task</button>
       </div>
     </div>
     <div id="taskContainer"></div>
@@ -182,6 +156,23 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let tasks = [], categories = [], masterFoods = [];
+
+    // --- Weather Logic Fixed ---
+    async function syncWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current_weather=true');
+        const data = await res.json();
+        const currentTemp = Math.round(data.current_weather.temperature);
+        document.getElementById('temp').innerText = currentTemp + "°";
+        db.ref('dashboard/weather').set(currentTemp); 
+      } catch (e) { document.getElementById('temp').innerText = "32°"; }
+    }
+
+    db.ref('dashboard/weather').on('value', (s) => {
+      const val = s.val();
+      if (val) document.getElementById('temp').innerText = val + "°";
+      else syncWeather(); // Fetch if Firebase node is empty
+    });
 
     function toggleVisibility(id) {
       const el = document.getElementById(id);
@@ -216,13 +207,7 @@
       db.ref('dashboard/tasks').set(tasks).then(() => document.getElementById('taskIn').value = "");
     }
 
-    function editTask(i, newText) {
-      if(tasks[i].text !== newText) {
-        tasks[i].text = newText;
-        db.ref('dashboard/tasks').set(tasks);
-      }
-    }
-
+    function editTask(i, newText) { if(tasks[i].text !== newText) { tasks[i].text = newText; db.ref('dashboard/tasks').set(tasks); } }
     function toggleDone(i) { tasks[i].done = !tasks[i].done; db.ref('dashboard/tasks').set(tasks); }
     function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
 
@@ -244,12 +229,9 @@
           div.querySelector('div').innerHTML += `
             <div class="task-item">
               <input type="checkbox" style="width:auto; margin-right:15px;" ${t.done?'checked':''} onchange="toggleDone(${idx})">
-              <div class="task-text" contenteditable="true" 
-                   onblur="editTask(${idx}, this.innerText)" 
-                   onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}"
-                   style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
-              <small style="opacity:0.5; margin-right:15px;">${t.time || ''}</small>
-              <button onclick="deleteTask(${idx})" style="background:none; border:none; color:#ff4d4d; font-size:1.2rem; cursor:pointer;">&times;</button>
+              <div class="task-text" contenteditable="true" onblur="editTask(${idx}, this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
+              <small style="opacity:0.5; margin-right:10px;">${t.time || ''}</small>
+              <button onclick="deleteTask(${idx})" class="btn-del">&times;</button>
             </div>`;
         });
       });
