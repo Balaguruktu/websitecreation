@@ -2,108 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Home Dashboard Pro</title>
+  <title>Smart Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
   <style>
     :root { 
-      --bg-overlay: rgba(244, 244, 249, 0.8); 
-      --text: #333; 
-      --card: rgba(255, 255, 255, 0.7); 
-      --accent: #3498db; 
+      --glass: rgba(255, 255, 255, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --text: #1a1c1e; 
+      --accent: #6366f1; 
+      --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
     }
     [data-theme="dark"] { 
-      --bg-overlay: rgba(26, 26, 26, 0.85); 
-      --text: #f0f0f0; 
-      --card: rgba(45, 45, 45, 0.75); 
-      --accent: #ff9f43; 
+      --glass: rgba(15, 23, 42, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc; 
+      --accent: #818cf8; 
     }
     
     body { 
-      font-family: 'Segoe UI', sans-serif; 
-      margin: 0; 
-      padding: 20px; 
-      color: var(--text); 
-      transition: 0.3s;
-      background-image: url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1920&q=80');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      margin: 0; min-height: 100vh; color: var(--text); transition: 0.4s;
+      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80') center/cover fixed;
+      display: flex; justify-content: center;
     }
 
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg-overlay);
-      z-index: -1;
-      transition: 0.3s;
+    .sidebar {
+      width: 300px; height: auto; max-height: calc(100vh - 40px); margin: 20px;
+      background: var(--glass); backdrop-filter: blur(20px);
+      border-radius: 28px; border: 1px solid var(--glass-border);
+      padding: 25px; box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column; gap: 15px;
+      position: sticky; top: 20px; overflow-y: auto;
     }
 
-    /* Small Theme Toggle in Left Corner */
-    .theme-toggle-container {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      z-index: 1000;
+    .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; }
+
+    .section { 
+      background: var(--glass); backdrop-filter: blur(20px);
+      padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border);
+      box-shadow: var(--card-shadow); margin-bottom: 25px;
     }
 
-    .theme-icon-btn {
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.3);
-      backdrop-filter: blur(5px);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    /* Management UI */
+    .mgmt-card { margin-top: 10px; }
+    .mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .mgmt-label { font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .add-row { display: flex; gap: 8px; }
+    
+    .view-btn { 
+      background: none; border: none; color: var(--accent); 
+      font-weight: 800; font-size: 0.65rem; cursor: pointer; text-transform: uppercase;
+    }
+
+    .db-list { 
+      max-height: 150px; overflow-y: auto; border-radius: 12px; 
+      background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px;
+    }
+
+    .db-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; font-size: 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    
+    input, select {
+      padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.2); color: var(--text); width: 100%;
+      font-family: inherit; font-size: 0.8rem;
+    }
+
+    .btn-add { padding: 8px 14px; border-radius: 10px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 800; }
+    .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 1rem; }
+
+    /* Task Styles with Editing support */
+    .task-item {
+      display: flex; align-items: center; padding: 12px; 
+      background: rgba(255,255,255,0.05); border-radius: 15px; margin-bottom: 8px;
       transition: 0.2s;
     }
+    .task-text { flex: 1; padding: 4px 8px; border-radius: 6px; cursor: text; }
+    .task-text:focus { background: rgba(0,0,0,0.05); outline: none; }
+    .task-text[contenteditable="true"]:empty:before { content: "Enter task..."; opacity: 0.4; }
 
-    .theme-icon-btn:hover { transform: scale(1.1); }
-    
-    .section { 
-      background: var(--card); 
-      padding: 20px; 
-      border-radius: 12px; 
-      margin-bottom: 20px; 
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .greeting { font-size: 1.8rem; font-weight: bold; margin-bottom: 5px; color: var(--accent); text-align: center; }
-    #weather { text-align: center; font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; font-weight: 500; }
-    
-    .manage-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .manage-list { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1); }
-    .manage-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.05); margin-bottom: 5px; border-radius: 8px; }
-
-    .meal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
-    .meal-item { display: flex; flex-direction: column; }
-    .meal-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: bold; margin-bottom: 8px; }
-    
-    select.meal-select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--text); font-weight: 500; cursor: pointer; }
-
-    button { padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; transition: 0.2s; }
-    input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; box-sizing: border-box; background: var(--card); color: var(--text); }
-    
-    .input-group { position: relative; display: flex; align-items: center; }
-    .voice-btn { position: absolute; right: 10px; background: none; font-size: 20px; color: var(--accent); border: none; padding: 0; cursor: pointer; }
-
-    ul { list-style: none; padding: 0; }
-    li { display: flex; align-items: center; padding: 14px; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    li input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.3); cursor: pointer; }
-    
-    .task-info { flex-grow: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
-    .task-meta { font-size: 0.85rem; color: #e74c3c; font-weight: bold; white-space: nowrap; }
-    .del-btn { background:none; color:#ff4d4d; font-size:24px; padding: 0 0 0 15px; cursor: pointer; }
-    
-    .manage-toggle-btn { background:none; color:var(--accent); font-size: 0.8rem; padding: 0; text-decoration: underline; margin-top: 5px; display: block; text-align: left; cursor: pointer; }
+    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .progress-ring { width: 50px; height: 50px; transform: rotate(-90deg); }
+    .progress-ring-circle { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: 0.4s; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -111,68 +91,82 @@
 </head>
 <body data-theme="light">
 
-  <div class="theme-toggle-container">
-    <button class="theme-icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-  </div>
-
-  <div class="section">
-    <div id="greeting" class="greeting">Hello!</div>
-    <div id="weather">Weather loading...</div>
-  </div>
-
-  <div class="section">
-    <h3>🍱 Master Food Database</h3>
-    <div class="manage-row">
-      <input type="text" id="masterFoodInput" placeholder="Add dish (e.g. Pasta, Dosa)...">
-      <button onclick="addMasterFood()" style="background:var(--accent); color:white;">Add</button>
+  <div class="sidebar">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button style="width:32px; height:32px; border-radius:8px; border:1px solid var(--glass-border); background:var(--glass); cursor:pointer;" onclick="toggleTheme()">🌓</button>
+      <div id="greeting" style="font-weight: 800; font-size: 1.2rem;">Morning!</div>
     </div>
-    <button onclick="toggleView('masterFoodTags', 'viewDbBtn')" id="viewDbBtn" class="manage-toggle-btn">🔧 Manage Food Items</button>
-    <div id="masterFoodTags" class="manage-list"></div>
-  </div>
-
-  <div class="section">
-    <h3>🗂️ Manage Categories</h3>
-    <div class="manage-row">
-      <input type="text" id="categoryInput" placeholder="New category (e.g. Gym, Work)...">
-      <button onclick="addCategory()" style="background:var(--accent); color:white;">Add</button>
-    </div>
-    <button onclick="toggleView('categoryList', 'viewCatBtn')" id="viewCatBtn" class="manage-toggle-btn">🔧 Manage Categories</button>
-    <div id="categoryList" class="manage-list"></div>
-  </div>
-
-  <div class="section">
-    <h3>🍽️ Daily Food Menu</h3>
-    <div class="meal-grid">
-      <div class="meal-item">
-        <span class="meal-label">Morning</span>
-        <select id="select-morn" class="meal-select" onchange="updateMeal('morn')"></select>
-      </div>
-      <div class="meal-item">
-        <span class="meal-label">Afternoon</span>
-        <select id="select-aft" class="meal-select" onchange="updateMeal('aft')"></select>
-      </div>
-      <div class="meal-item">
-        <span class="meal-label">Night</span>
-        <select id="select-nyt" class="meal-select" onchange="updateMeal('nyt')"></select>
+    
+    <div class="status-container">
+      <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent);">--°</div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <svg class="progress-ring"><circle class="progress-ring-circle" id="circle" r="20" cx="25" cy="25" stroke-dasharray="125" stroke-dashoffset="125"></circle></svg>
+        <span style="font-size: 0.7rem; font-weight: 800;" id="progressText">0% Done</span>
       </div>
     </div>
+
+    <hr style="opacity: 0.1; width: 100%; margin: 5px 0;">
+    <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.4; text-transform: uppercase; letter-spacing: 1px;">Manage Databases</div>
+
+    <div class="mgmt-card">
+      <div class="mgmt-header">
+        <span class="mgmt-label">🍱 Food Master</span>
+        <button class="view-btn" onclick="toggleVisibility('foodList')">View All</button>
+      </div>
+      <div class="add-row">
+        <input type="text" id="foodIn" placeholder="Add dish...">
+        <button class="btn-add" onclick="addFood()">Add</button>
+      </div>
+      <div id="foodList" class="db-list"></div>
+    </div>
+
+    <div class="mgmt-card">
+      <div class="mgmt-header">
+        <span class="mgmt-label">🗂️ Categories</span>
+        <button class="view-btn" onclick="toggleVisibility('catList')">View All</button>
+      </div>
+      <div class="add-row">
+        <input type="text" id="catIn" placeholder="Add group...">
+        <button class="btn-add" onclick="addCat()">Add</button>
+      </div>
+      <div id="catList" class="db-list"></div>
+    </div>
   </div>
 
-  <div class="section">
-    <h3>✍️ Add Task</h3>
-    <div class="input-group">
-      <input type="text" id="taskInput" placeholder="What's next?">
-      <button class="voice-btn" onclick="startVoice()">🎙️</button>
+  <div class="main-content">
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin:0; font-weight: 800;">🍽️ Daily Meal Planner</h3>
+        <input type="date" id="mealDate" onchange="loadMealData()" style="width: auto;">
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">MORNING</small>
+          <select id="select-morn" onchange="updateMeal('morn')"></select>
+        </div>
+        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">AFTERNOON</small>
+          <select id="select-aft" onchange="updateMeal('aft')"></select>
+        </div>
+        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">NIGHT</small>
+          <select id="select-nyt" onchange="updateMeal('nyt')"></select>
+        </div>
+      </div>
     </div>
-    <div style="display:flex; gap:5px;">
-      <select id="taskCategorySelect"></select>
-      <input type="date" id="taskDate">
-      <input type="time" id="taskTime">
-    </div>
-    <button onclick="addTask()" style="background: #28a745; color: white; width: 100%; margin-top: 10px;">Add Task</button>
-  </div>
 
-  <div id="categoriesContainer"></div>
+    <div class="section">
+      <h3 style="margin-top:0; font-weight: 800;">✍️ Quick Add Task</h3>
+      <div style="display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr auto; gap: 10px;">
+        <input type="text" id="taskIn" placeholder="Task name...">
+        <select id="taskCatSelect"></select>
+        <input type="date" id="taskD">
+        <input type="time" id="taskT">
+        <button onclick="addTask()" style="background:var(--accent); color:white; border:none; padding:10px 18px; border-radius:10px; font-weight:800; cursor:pointer;">Add</button>
+      </div>
+    </div>
+    <div id="taskContainer"></div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -187,175 +181,97 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    let tasks = [];
-    let masterFoods = [];
-    let categories = ["Home", "Personal"];
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    let tasks = [], categories = [], masterFoods = [];
 
-    function addCategory() {
-      const val = document.getElementById('categoryInput').value.trim();
-      if (val && !categories.includes(val)) {
-        categories.push(val);
-        db.ref('dashboard/categories').set(categories);
-        document.getElementById('categoryInput').value = "";
-      }
-    }
-
-    function deleteCategory(index) {
-      if(categories.length <= 1) return alert("Minimum one category required.");
-      if(confirm(`Delete "${categories[index]}" and its tasks?`)) {
-        const catName = categories[index];
-        categories.splice(index, 1);
-        tasks = tasks.filter(t => t.cat !== catName);
-        db.ref('dashboard/categories').set(categories);
-        db.ref('dashboard/tasks').set(tasks);
-      }
-    }
-
-    function addMasterFood() {
-      const val = document.getElementById('masterFoodInput').value.trim();
-      if (val && !masterFoods.includes(val)) {
-        masterFoods.push(val);
-        db.ref('dashboard/masterFoods').set(masterFoods);
-        document.getElementById('masterFoodInput').value = "";
-      }
-    }
-
-    function deleteMasterFood(index) {
-      if(confirm(`Delete "${masterFoods[index]}"?`)) {
-        masterFoods.splice(index, 1);
-        db.ref('dashboard/masterFoods').set(masterFoods);
-      }
-    }
-
-    function toggleView(id, btnId) {
-      const container = document.getElementById(id);
-      const btn = document.getElementById(btnId);
-      const isFood = id === 'masterFoodTags';
-      if (container.style.display === "block") {
-        container.style.display = "none";
-        btn.innerText = isFood ? "🔧 Manage Food Items" : "🔧 Manage Categories";
-      } else {
-        container.style.display = "block";
-        btn.innerText = "✖ Close Management View";
-      }
-    }
-
-    function updateMeal(timeOfDay) {
-      const val = document.getElementById(`select-${timeOfDay}`).value;
-      db.ref(`dashboard/meals/${timeOfDay}`).set(val);
+    function toggleVisibility(id) {
+      const el = document.getElementById(id);
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
-      
-      categories = data.categories || ["Home", "Personal"];
-      document.getElementById('categoryList').innerHTML = categories.map((c, i) => `
-        <div class="manage-item"><span>${c}</span><button onclick="deleteCategory(${i})" style="color:#ff4d4d; background:none;">Delete</button></div>
-      `).join('');
-      
-      document.getElementById('taskCategorySelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
-
+      categories = data.categories || ["Home"];
       masterFoods = data.masterFoods || [];
-      document.getElementById('masterFoodTags').innerHTML = masterFoods.map((f, i) => `
-        <div class="manage-item"><span>${f}</span><button onclick="deleteMasterFood(${i})" style="color:#ff4d4d; background:none;">Delete</button></div>
-      `).join('');
+      tasks = Array.isArray(data.tasks) ? data.tasks : [];
 
-      ['morn', 'aft', 'nyt'].forEach(time => {
-        const select = document.getElementById(`select-${time}`);
-        const currentVal = (data.meals && data.meals[time]) ? data.meals[time] : "";
-        let options = `<option value="">-- Select --</option>`;
-        options += masterFoods.map(f => `<option value="${f}" ${f === currentVal ? 'selected' : ''}>${f}</option>`).join('');
-        select.innerHTML = options;
-      });
+      document.getElementById('taskCatSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      const opts = `<option value="">Select...</option>` + masterFoods.map(f => `<option value="${f}">${f}</option>`).join('');
+      ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).innerHTML = opts);
 
-      if (data.theme) document.body.setAttribute('data-theme', data.theme);
-      tasks = data.tasks || [];
-      render();
+      document.getElementById('foodList').innerHTML = masterFoods.map((f, i) => `<div class="db-item"><span>${f}</span><button class="btn-del" onclick="delFood(${i})">&times;</button></div>`).join('');
+      document.getElementById('catList').innerHTML = categories.map((c, i) => `<div class="db-item"><span>${c}</span><button class="btn-del" onclick="delCat(${i})">&times;</button></div>`).join('');
+
+      updateProgress(); renderTasks(); loadMealData();
     });
 
-    function formatTime12h(timeStr) {
-      if (!timeStr) return "";
-      let [h, m] = timeStr.split(':');
-      let ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return `${h}:${m} ${ampm}`;
-    }
-
-    function formatDateFriendly(dateStr) {
-      if (!dateStr) return "";
-      const [y, m, d] = dateStr.split('-');
-      return `${parseInt(d)}-${months[parseInt(m)-1]}`;
-    }
-
-    function updateGreeting() {
-      const hrs = new Date().getHours();
-      let greet = (hrs < 12) ? "Good Morning!" : (hrs < 17) ? "Good Afternoon!" : "Good Evening!";
-      document.getElementById('greeting').innerText = greet;
-    }
-
-    async function fetchWeather() {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-        const data = await res.json();
-        document.getElementById('weather').innerText = `🌡️ ${data.current_weather.temperature}°C • Local Weather`;
-      }, () => { document.getElementById('weather').innerText = "Location off"; });
-    }
-
-    function startVoice() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.onresult = (e) => document.getElementById('taskInput').value = e.results[0][0].transcript;
-      recognition.start();
-    }
+    function addFood() { const v = document.getElementById('foodIn').value.trim(); if(v){masterFoods.push(v); db.ref('dashboard/masterFoods').set(masterFoods); document.getElementById('foodIn').value="";} }
+    function delFood(i) { masterFoods.splice(i,1); db.ref('dashboard/masterFoods').set(masterFoods); }
+    function addCat() { const v = document.getElementById('catIn').value.trim(); if(v){categories.push(v); db.ref('dashboard/categories').set(categories); document.getElementById('catIn').value="";} }
+    function delCat(i) { categories.splice(i,1); db.ref('dashboard/categories').set(categories); }
 
     function addTask() {
-      const text = document.getElementById('taskInput').value;
-      const cat = document.getElementById('taskCategorySelect').value;
-      const date = document.getElementById('taskDate').value;
-      const time = document.getElementById('taskTime').value;
+      const text = document.getElementById('taskIn').value.trim();
       if (!text) return;
-      tasks.push({ text, cat, date, time, done: false, notified: false });
-      db.ref('dashboard/tasks').set(tasks);
-      document.getElementById('taskInput').value = "";
+      tasks.push({ text, cat: document.getElementById('taskCatSelect').value, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
+      db.ref('dashboard/tasks').set(tasks).then(() => document.getElementById('taskIn').value = "");
     }
 
-    function render() {
-      const container = document.getElementById('categoriesContainer');
-      container.innerHTML = "";
+    function editTask(i, newText) {
+      if(tasks[i].text !== newText) {
+        tasks[i].text = newText;
+        db.ref('dashboard/tasks').set(tasks);
+      }
+    }
+
+    function toggleDone(i) { tasks[i].done = !tasks[i].done; db.ref('dashboard/tasks').set(tasks); }
+    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
+
+    function updateProgress() {
+      const total = tasks.length, done = tasks.filter(t => t.done).length;
+      const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+      document.getElementById('circle').style.strokeDashoffset = 125 - (pct / 100) * 125;
+      document.getElementById('progressText').innerText = `${pct}% Done`;
+    }
+
+    function renderTasks() {
+      const cont = document.getElementById('taskContainer'); cont.innerHTML = "";
       categories.forEach(cat => {
-        const div = document.createElement('div');
-        div.className = "section";
-        div.innerHTML = `<h3>${cat}</h3><ul id="list-${cat}"></ul>`;
-        container.appendChild(div);
+        const div = document.createElement('div'); div.className = "section";
+        div.innerHTML = `<h3 style="margin-top:0;">${cat}</h3><div id="l-${cat.replace(/\s+/g,'')}"></div>`;
+        cont.appendChild(div);
         tasks.filter(t => t.cat === cat).forEach((t) => {
           const idx = tasks.indexOf(t);
-          const li = document.createElement('li');
-          const meta = (t.date || t.time) ? `${formatDateFriendly(t.date)} ${formatTime12h(t.time)}` : "";
-          li.innerHTML = `
-            <input type="checkbox" ${t.done ? 'checked' : ''}>
-            <div class="task-info">
-              <span style="${t.done ? 'text-decoration:line-through; opacity:0.6' : ''}">${t.text}</span>
-              <span class="task-meta">${meta}</span>
-            </div>
-            <button class="del-btn" onclick="deleteTask(${idx})">&times;</button>
-          `;
-          li.querySelector('input').onchange = () => { tasks[idx].done = !tasks[idx].done; db.ref('dashboard/tasks').set(tasks); };
-          div.querySelector('ul').appendChild(li);
+          div.querySelector('div').innerHTML += `
+            <div class="task-item">
+              <input type="checkbox" style="width:auto; margin-right:15px;" ${t.done?'checked':''} onchange="toggleDone(${idx})">
+              <div class="task-text" contenteditable="true" 
+                   onblur="editTask(${idx}, this.innerText)" 
+                   onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}"
+                   style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
+              <small style="opacity:0.5; margin-right:15px;">${t.time || ''}</small>
+              <button onclick="deleteTask(${idx})" style="background:none; border:none; color:#ff4d4d; font-size:1.2rem; cursor:pointer;">&times;</button>
+            </div>`;
         });
       });
     }
 
-    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
-    function toggleTheme() {
-      const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.body.setAttribute('data-theme', next);
-      db.ref('dashboard/theme').set(next);
+    function updateMeal(s) { db.ref(`dashboard/mealPlanner/${document.getElementById('mealDate').value}/${s}`).set(document.getElementById(`select-${s}`).value); }
+    function loadMealData() {
+      db.ref(`dashboard/mealPlanner/${document.getElementById('mealDate').value}`).once('value', (snap) => {
+        const d = snap.val() || {};
+        ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).value = d[t] || "");
+      });
     }
-    
-    updateGreeting();
-    fetchWeather();
+
+    function toggleTheme() {
+      const cur = document.body.getAttribute('data-theme');
+      db.ref('dashboard/theme').set(cur === 'light' ? 'dark' : 'light');
+    }
+    db.ref('dashboard/theme').on('value', (s) => document.body.setAttribute('data-theme', s.val() || 'light'));
+
+    const h = new Date().getHours();
+    document.getElementById('greeting').innerText = (h < 12) ? "Morning!" : (h < 17) ? "Afternoon!" : "Evening!";
+    document.getElementById('mealDate').value = new Date().toISOString().split('T')[0];
   </script>
 </body>
 </html>
