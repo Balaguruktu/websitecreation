@@ -181,13 +181,19 @@
     db.ref('dashboard').on('value', (snap) => {
       const data = snap.val() || {};
       categories = data.categories || ["Home"];
-      // Sorting master foods alphabetically when data is received
       masterFoods = (data.masterFoods || []).sort((a, b) => a.localeCompare(b));
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
 
+      // Save the current selection before re-rendering
+      const currentCatVal = document.getElementById('taskCatSelect').value;
+      
       document.getElementById('taskCatSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
       
-      // Dropdown list now follows the sorted masterFoods array
+      // Restore the selection if it still exists in the list
+      if (categories.includes(currentCatVal)) {
+          document.getElementById('taskCatSelect').value = currentCatVal;
+      }
+
       const opts = `<option value="">Select...</option>` + masterFoods.map(f => `<option value="${f}">${f}</option>`).join('');
       ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).innerHTML = opts);
 
@@ -201,7 +207,6 @@
       const v = document.getElementById('foodIn').value.trim(); 
       if(v){
         masterFoods.push(v); 
-        // Sort before saving to keep database clean
         masterFoods.sort((a, b) => a.localeCompare(b));
         db.ref('dashboard/masterFoods').set(masterFoods); 
         document.getElementById('foodIn').value="";
@@ -214,12 +219,17 @@
 
     function addTask() {
       const text = document.getElementById('taskIn').value.trim();
+      const selectedCat = document.getElementById('taskCatSelect').value; // Store category before clearing inputs
       if (!text) return;
-      tasks.push({ text, cat: document.getElementById('taskCatSelect').value, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
+      
+      tasks.push({ text, cat: selectedCat, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
+      
       db.ref('dashboard/tasks').set(tasks).then(() => {
         document.getElementById('taskIn').value = "";
         document.getElementById('taskD').value = "";
         document.getElementById('taskT').value = "";
+        // Re-assign the category value so it stays on the selected category
+        document.getElementById('taskCatSelect').value = selectedCat;
       });
     }
 
