@@ -22,12 +22,16 @@
     
     body { 
       font-family: 'Plus Jakarta Sans', sans-serif; 
-      margin: 0; min-height: 100vh; color: var(--text); transition: 0.4s;
-      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80') center/cover fixed;
+      margin: 0; min-height: 100vh; color: var(--text); 
+      transition: background 1.2s ease-in-out, color 0.4s;
+      background-position: center;
+      background-size: cover;
+      background-attachment: fixed;
       display: flex; flex-direction: row;
+      /* Fallback colorful gradient while image loads */
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    /* Responsive Layout */
     @media (max-width: 900px) {
       body { flex-direction: column; }
       .sidebar { width: auto !important; margin: 10px !important; position: static !important; }
@@ -38,7 +42,7 @@
 
     .sidebar {
       width: 300px; height: auto; max-height: calc(100vh - 40px); margin: 20px;
-      background: var(--glass); backdrop-filter: blur(20px);
+      background: var(--glass); backdrop-filter: blur(25px);
       border-radius: 28px; border: 1px solid var(--glass-border);
       padding: 25px; box-shadow: var(--card-shadow);
       display: flex; flex-direction: column; gap: 15px;
@@ -48,13 +52,12 @@
     .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; width: 100%; box-sizing: border-box; }
 
     .section { 
-      background: var(--glass); backdrop-filter: blur(20px);
+      background: var(--glass); backdrop-filter: blur(25px);
       padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border);
       box-shadow: var(--card-shadow); margin-bottom: 25px;
     }
 
-    /* UI Components */
-    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
     .mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .mgmt-label { font-size: 0.85rem; font-weight: 800; }
     .db-list { max-height: 150px; overflow-y: auto; border-radius: 12px; background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px; }
@@ -67,9 +70,8 @@
     .task-item { display: flex; align-items: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 18px; margin-bottom: 10px; }
     .task-text { flex: 1; padding: 4px 8px; cursor: text; font-size: 1rem; }
     .task-text:focus { background: rgba(0,0,0,0.05); outline: none; border-radius: 8px; }
-
-    .progress-ring { width: 50px; height: 50px; transform: rotate(-90deg); }
-    .progress-ring-circle { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: 0.4s; }
+    
+    #quote-text { font-size: 0.85rem; font-style: italic; opacity: 0.8; line-height: 1.4; margin-top: 5px; font-weight: 400; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -85,9 +87,9 @@
     
     <div class="status-container">
       <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent);">--°</div>
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <svg class="progress-ring"><circle class="progress-ring-circle" id="circle" r="20" cx="25" cy="25" stroke-dasharray="125" stroke-dashoffset="125"></circle></svg>
-        <span style="font-size: 0.75rem; font-weight: 800;" id="progressText">0% Done</span>
+      <div id="quote-container">
+        <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5;">Inspiration</div>
+        <div id="quote-text">"Design is not just what it looks like and feels like. Design is how it works."</div>
       </div>
     </div>
 
@@ -157,6 +159,37 @@
     const db = firebase.database();
     let tasks = [], categories = [], masterFoods = [];
 
+    const quotes = [
+      "Architecture should speak of its time and place, but yearn for timelessness.",
+      "God is in the details.",
+      "A room is not a room without natural light.",
+      "Form ever follows function.",
+      "The mother art is architecture. Without an architecture of our own we have no soul.",
+      "To provide meaningful architecture is not to copy history, but to articulate it.",
+      "Logic will get you from A to B. Imagination will take you everywhere.",
+      "We shape our buildings; thereafter they shape us.",
+      "Recognizing the need is the primary condition for design.",
+      "Architecture is the learned game of forms assembled in the light."
+    ];
+
+    function setRandomContext() {
+      // Set Random Quote
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      document.getElementById('quote-text').innerText = `"${quotes[randomIndex]}"`;
+
+      // NEW COLORFUL BACKGROUND LOGIC
+      // Randomly picks between Nature, Architecture, Gradient, and Abstract
+      const collectionIds = ['11649432', '3330452', '4467548', '3178572']; 
+      const randomCol = collectionIds[Math.floor(Math.random() * collectionIds.length)];
+      const bgUrl = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80&sig=${Math.random()}`;
+      
+      // We use a more reliable random image service for variety
+      const varietyUrl = `https://picsum.photos/1920/1080?random=${Math.floor(Math.random() * 1000)}`;
+      
+      // Applying a dark overlay for readability + the random image
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('${varietyUrl}')`;
+    }
+
     async function syncWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current_weather=true');
@@ -184,12 +217,8 @@
       masterFoods = (data.masterFoods || []).sort((a, b) => a.localeCompare(b));
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
 
-      // Save the current selection before re-rendering
       const currentCatVal = document.getElementById('taskCatSelect').value;
-      
       document.getElementById('taskCatSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
-      
-      // Restore the selection if it still exists in the list
       if (categories.includes(currentCatVal)) {
           document.getElementById('taskCatSelect').value = currentCatVal;
       }
@@ -200,7 +229,7 @@
       document.getElementById('foodList').innerHTML = masterFoods.map((f, i) => `<div class="db-item"><span>${f}</span><button class="btn-del" onclick="delFood(${i})">&times;</button></div>`).join('');
       document.getElementById('catList').innerHTML = categories.map((c, i) => `<div class="db-item"><span>${c}</span><button class="btn-del" onclick="delCat(${i})">&times;</button></div>`).join('');
 
-      updateProgress(); renderTasks(); loadMealData();
+      renderTasks(); loadMealData();
     });
 
     function addFood() { 
@@ -219,30 +248,25 @@
 
     function addTask() {
       const text = document.getElementById('taskIn').value.trim();
-      const selectedCat = document.getElementById('taskCatSelect').value; // Store category before clearing inputs
+      const selectedCat = document.getElementById('taskCatSelect').value;
       if (!text) return;
-      
       tasks.push({ text, cat: selectedCat, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
-      
       db.ref('dashboard/tasks').set(tasks).then(() => {
         document.getElementById('taskIn').value = "";
         document.getElementById('taskD').value = "";
         document.getElementById('taskT').value = "";
-        // Re-assign the category value so it stays on the selected category
         document.getElementById('taskCatSelect').value = selectedCat;
       });
     }
 
     function editTask(i, newText) { if(tasks[i].text !== newText) { tasks[i].text = newText; db.ref('dashboard/tasks').set(tasks); } }
-    function toggleDone(i) { tasks[i].done = !tasks[i].done; db.ref('dashboard/tasks').set(tasks); }
-    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
-
-    function updateProgress() {
-      const total = tasks.length, done = tasks.filter(t => t.done).length;
-      const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-      document.getElementById('circle').style.strokeDashoffset = 125 - (pct / 100) * 125;
-      document.getElementById('progressText').innerText = `${pct}% Done`;
+    
+    function toggleDone(i) { 
+      tasks.splice(i, 1); 
+      db.ref('dashboard/tasks').set(tasks); 
     }
+    
+    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
 
     function renderTasks() {
       const cont = document.getElementById('taskContainer'); cont.innerHTML = "";
@@ -255,7 +279,7 @@
           const dateTimeDisplay = [t.date, t.time].filter(Boolean).join(' | ');
           div.querySelector('div').innerHTML += `
             <div class="task-item">
-              <input type="checkbox" style="width:auto; margin-right:15px;" ${t.done?'checked':''} onchange="toggleDone(${idx})">
+              <input type="checkbox" style="width:auto; margin-right:15px;" onchange="toggleDone(${idx})">
               <div class="task-text" contenteditable="true" onblur="editTask(${idx}, this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
               <small style="opacity:0.5; margin-right:10px;">${dateTimeDisplay}</small>
               <button onclick="deleteTask(${idx})" class="btn-del">&times;</button>
@@ -281,6 +305,8 @@
     const h = new Date().getHours();
     document.getElementById('greeting').innerText = (h < 12) ? "Morning!" : (h < 17) ? "Afternoon!" : "Evening!";
     document.getElementById('mealDate').value = new Date().toISOString().split('T')[0];
+    
+    setRandomContext();
   </script>
 </body>
 </html>
