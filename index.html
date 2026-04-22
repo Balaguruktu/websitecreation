@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Home</title>
+  <title>Smart Home Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
   <style>
@@ -28,7 +28,6 @@
       background-size: cover;
       background-attachment: fixed;
       display: flex; flex-direction: row;
-      /* Fallback colorful gradient while image loads */
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
@@ -58,6 +57,8 @@
     }
 
     .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+    .weather-info-row { display: flex; gap: 15px; margin-top: 5px; font-size: 0.8rem; opacity: 0.8; width: 100%; justify-content: center; }
+    
     .mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .mgmt-label { font-size: 0.85rem; font-weight: 800; }
     .db-list { max-height: 150px; overflow-y: auto; border-radius: 12px; background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px; }
@@ -86,8 +87,20 @@
     </div>
     
     <div class="status-container">
-      <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent);">--°</div>
-      <div id="quote-container">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="weather-icon" style="font-size: 2.5rem;">☀️</div>
+        <div style="text-align: left;">
+          <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1;">--°</div>
+          <div id="weather-desc" style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.6;">Loading...</div>
+        </div>
+      </div>
+      
+      <div class="weather-info-row">
+        <span>🌡️ Feels: <b id="feels-like">--°</b></span>
+        <span>💧 Hum: <b id="humidity">--%</b></span>
+      </div>
+
+      <div id="quote-container" style="margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px;">
         <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5;">Inspiration</div>
         <div id="quote-text">"Design is not just what it looks like and feels like. Design is how it works."</div>
       </div>
@@ -173,37 +186,66 @@
     ];
 
     function setRandomContext() {
-      // Set Random Quote
       const randomIndex = Math.floor(Math.random() * quotes.length);
       document.getElementById('quote-text').innerText = `"${quotes[randomIndex]}"`;
-
-      // NEW COLORFUL BACKGROUND LOGIC
-      // Randomly picks between Nature, Architecture, Gradient, and Abstract
-      const collectionIds = ['11649432', '3330452', '4467548', '3178572']; 
-      const randomCol = collectionIds[Math.floor(Math.random() * collectionIds.length)];
-      const bgUrl = `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80&sig=${Math.random()}`;
-      
-      // We use a more reliable random image service for variety
       const varietyUrl = `https://picsum.photos/1920/1080?random=${Math.floor(Math.random() * 1000)}`;
-      
-      // Applying a dark overlay for readability + the random image
       document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('${varietyUrl}')`;
     }
 
     async function syncWeather() {
+      const weatherMap = {
+        0: { icon: "☀️", desc: "Clear Sky" },
+        1: { icon: "🌤️", desc: "Mainly Clear" },
+        2: { icon: "⛅", desc: "Partly Cloudy" },
+        3: { icon: "☁️", desc: "Overcast" },
+        45: { icon: "🌫️", desc: "Foggy" },
+        51: { icon: "🌦️", desc: "Drizzle" },
+        61: { icon: "🌧️", desc: "Rainy" },
+        71: { icon: "❄️", desc: "Snowy" },
+        80: { icon: "🌦️", desc: "Showers" },
+        95: { icon: "⛈️", desc: "Stormy" }
+      };
+
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current_weather=true');
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code');
         const data = await res.json();
-        const currentTemp = Math.round(data.current_weather.temperature);
-        document.getElementById('temp').innerText = currentTemp + "°";
-        db.ref('dashboard/weather').set(currentTemp); 
-      } catch (e) { document.getElementById('temp').innerText = "32°"; }
+        const cur = data.current;
+        const weatherInfo = weatherMap[cur.weather_code] || { icon: "🌡️", desc: "Weather" };
+
+        const weatherObj = {
+          temp: Math.round(cur.temperature_2m),
+          feels: Math.round(cur.apparent_temperature),
+          hum: Math.round(cur.relative_humidity_2m),
+          icon: weatherInfo.icon,
+          desc: weatherInfo.desc
+        };
+
+        // Immediate Local UI Update
+        updateWeatherUI(weatherObj);
+        // Save to Firebase
+        db.ref('dashboard/weatherData').set(weatherObj); 
+      } catch (e) { 
+        console.error("Weather update failed", e);
+      }
     }
 
-    db.ref('dashboard/weather').on('value', (s) => {
+    function updateWeatherUI(val) {
+      if (!val) return;
+      document.getElementById('temp').innerText = (val.temp || "--") + "°";
+      document.getElementById('feels-like').innerText = (val.feels || "--") + "°";
+      document.getElementById('humidity').innerText = (val.hum || "--") + "%";
+      document.getElementById('weather-icon').innerText = val.icon || "🌡️";
+      document.getElementById('weather-desc').innerText = val.desc || "Unknown";
+    }
+
+    // Listen for Weather Data from Firebase
+    db.ref('dashboard/weatherData').on('value', (s) => {
       const val = s.val();
-      if (val) document.getElementById('temp').innerText = val + "°";
-      else syncWeather();
+      if (val && val.temp !== undefined) {
+        updateWeatherUI(val);
+      } else {
+        syncWeather();
+      }
     });
 
     function toggleVisibility(id) {
@@ -229,7 +271,8 @@
       document.getElementById('foodList').innerHTML = masterFoods.map((f, i) => `<div class="db-item"><span>${f}</span><button class="btn-del" onclick="delFood(${i})">&times;</button></div>`).join('');
       document.getElementById('catList').innerHTML = categories.map((c, i) => `<div class="db-item"><span>${c}</span><button class="btn-del" onclick="delCat(${i})">&times;</button></div>`).join('');
 
-      renderTasks(); loadMealData();
+      renderTasks(); 
+      loadMealData();
     });
 
     function addFood() { 
@@ -301,6 +344,8 @@
       db.ref('dashboard/theme').set(cur === 'light' ? 'dark' : 'light');
     }
     db.ref('dashboard/theme').on('value', (s) => document.body.setAttribute('data-theme', s.val() || 'light'));
+
+    setInterval(syncWeather, 1800000);
 
     const h = new Date().getHours();
     document.getElementById('greeting').innerText = (h < 12) ? "Morning!" : (h < 17) ? "Afternoon!" : "Evening!";
