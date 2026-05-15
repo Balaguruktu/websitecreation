@@ -4,75 +4,300 @@
   <meta charset="UTF-8">
   <title>Smart Home Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&display=swap" rel="stylesheet">
   <style>
-    :root { 
+    :root {
       --glass: rgba(255, 255, 255, 0.75);
+      --glass-strong: rgba(255, 255, 255, 0.9);
       --glass-border: rgba(255, 255, 255, 0.5);
-      --text: #1a1c1e; 
-      --accent: #6366f1; 
+      --text: #1a1c1e;
+      --text-soft: rgba(26, 28, 30, 0.6);
+      --accent: #6366f1;
+      --accent-rgb: 99, 102, 241;
+      --accent-soft: rgba(99, 102, 241, 0.1);
+      --success: #10b981;
+      --danger: #ef4444;
       --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+      --card-shadow-hover: 0 12px 48px 0 rgba(31, 38, 135, 0.15);
     }
-    [data-theme="dark"] { 
+    [data-theme="dark"] {
       --glass: rgba(15, 23, 42, 0.85);
+      --glass-strong: rgba(15, 23, 42, 0.95);
       --glass-border: rgba(255, 255, 255, 0.1);
-      --text: #f8fafc; 
-      --accent: #818cf8; 
+      --text: #f8fafc;
+      --text-soft: rgba(248, 250, 252, 0.6);
+      --accent: #818cf8;
+      --accent-rgb: 129, 140, 248;
+      --accent-soft: rgba(129, 140, 248, 0.15);
     }
-    
-    body { 
-      font-family: 'Plus Jakarta Sans', sans-serif; 
-      margin: 0; min-height: 100vh; color: var(--text); 
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0; min-height: 100vh; color: var(--text);
       transition: background 1.2s ease-in-out, color 0.4s;
-      background-position: center;
-      background-size: cover;
-      background-attachment: fixed;
+      background-position: center; background-size: cover; background-attachment: fixed;
       display: flex; flex-direction: row;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
+    h1, h2, h3, .display { font-family: 'Fraunces', serif; letter-spacing: -0.02em; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.5); }
+
     @media (max-width: 900px) {
       body { flex-direction: column; }
-      .sidebar { width: auto !important; margin: 10px !important; position: static !important; }
-      .main-content { padding: 10px !important; }
+      .sidebar { width: auto !important; margin: 10px !important; position: static !important; max-height: none !important; }
+      .main-content { padding: 10px !important; max-width: 100% !important; }
       .task-grid { grid-template-columns: 1fr !important; }
       .meal-grid { grid-template-columns: 1fr !important; }
     }
 
     .sidebar {
-      width: 300px; height: auto; max-height: calc(100vh - 40px); margin: 20px;
+      width: 320px; max-height: calc(100vh - 40px); margin: 20px;
       background: var(--glass); backdrop-filter: blur(25px);
       border-radius: 28px; border: 1px solid var(--glass-border);
-      padding: 25px; box-shadow: var(--card-shadow);
-      display: flex; flex-direction: column; gap: 15px;
+      padding: 22px; box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column; gap: 14px;
       position: sticky; top: 20px; overflow-y: auto;
+      animation: slideInLeft 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; width: 100%; box-sizing: border-box; }
+    .main-content { flex: 1; padding: 20px 40px 40px 0; max-width: 1100px; width: 100%; }
 
-    .section { 
+    .section {
       background: var(--glass); backdrop-filter: blur(25px);
       padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border);
-      box-shadow: var(--card-shadow); margin-bottom: 25px;
+      box-shadow: var(--card-shadow); margin-bottom: 22px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+    .section:hover { box-shadow: var(--card-shadow-hover); }
+    .section:nth-child(1) { animation-delay: 0.05s; }
+    .section:nth-child(2) { animation-delay: 0.15s; }
+    .section:nth-child(3) { animation-delay: 0.25s; }
+
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-container {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08), rgba(var(--accent-rgb), 0.02));
+      padding: 20px; border-radius: 20px; display: flex; flex-direction: column;
+      align-items: center; gap: 10px; text-align: center;
+      border: 1px solid rgba(var(--accent-rgb), 0.1);
     }
 
-    .status-container { background: rgba(0,0,0,0.03); padding: 20px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-    .weather-info-row { display: flex; gap: 15px; margin-top: 5px; font-size: 0.8rem; opacity: 0.8; width: 100%; justify-content: center; }
-    
+    #weather-icon { font-size: 2.8rem; animation: pulse 4s ease-in-out infinite; }
+    .weather-info-row { display: flex; gap: 15px; margin-top: 5px; font-size: 0.78rem; opacity: 0.8; width: 100%; justify-content: center; }
+
+    .clock {
+      font-family: 'Fraunces', serif;
+      font-size: 0.95rem; font-weight: 600;
+      opacity: 0.75; letter-spacing: 0.5px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.12), rgba(var(--accent-rgb), 0.04));
+      border: 1px solid rgba(var(--accent-rgb), 0.18);
+      border-radius: 18px; padding: 14px 16px;
+    }
+    .summary-label {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; opacity: 0.7; margin-bottom: 6px;
+    }
+    .summary-content { font-size: 0.85rem; line-height: 1.55; }
+
     .mgmt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .mgmt-label { font-size: 0.85rem; font-weight: 800; }
     .db-list { max-height: 150px; overflow-y: auto; border-radius: 12px; background: rgba(0,0,0,0.03); padding: 8px; display: none; margin-top: 8px; }
-    .db-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; font-size: 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
-    
-    input, select { padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.2); color: var(--text); font-family: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
-    .btn-add { padding: 10px 18px; border-radius: 12px; background: var(--accent); color: white; border: none; cursor: pointer; font-weight: 800; }
-    .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
+    .db-list.open { display: block; animation: fadeUp 0.3s ease; }
+    .db-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; font-size: 0.82rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .db-item:last-child { border-bottom: none; }
 
-    .task-item { display: flex; align-items: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 18px; margin-bottom: 10px; }
-    .task-text { flex: 1; padding: 4px 8px; cursor: text; font-size: 1rem; }
-    .task-text:focus { background: rgba(0,0,0,0.05); outline: none; border-radius: 8px; }
-    
-    #quote-text { font-size: 0.85rem; font-style: italic; opacity: 0.8; line-height: 1.4; margin-top: 5px; font-weight: 400; }
+    input, select {
+      padding: 11px 14px; border-radius: 12px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.25); color: var(--text);
+      font-family: inherit; font-size: 0.9rem; width: 100%;
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+      background: rgba(255,255,255,0.4);
+    }
+    [data-theme="dark"] input, [data-theme="dark"] select { background: rgba(255,255,255,0.05); }
+    [data-theme="dark"] input:focus, [data-theme="dark"] select:focus { background: rgba(255,255,255,0.1); }
+
+    .btn-add {
+      padding: 11px 18px; border-radius: 12px; background: var(--accent); color: white;
+      border: none; cursor: pointer; font-weight: 800;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.4); }
+    .btn-add:active { transform: translateY(0); }
+
+    .btn-soft {
+      padding: 8px 14px; border-radius: 12px;
+      background: var(--accent-soft); color: var(--accent);
+      border: none; cursor: pointer; font-weight: 700; font-size: 0.78rem;
+      transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-soft:hover { background: var(--accent); color: white; }
+
+    .btn-del {
+      color: var(--danger); background: none; border: none; cursor: pointer;
+      font-size: 1.2rem; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+    .btn-del:hover { background: rgba(239, 68, 68, 0.1); }
+
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--glass-border); background: var(--glass);
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease; font-size: 1rem;
+    }
+    .icon-btn:hover { transform: translateY(-1px) rotate(15deg); }
+
+    .task-item {
+      display: flex; align-items: center; padding: 14px;
+      background: rgba(255,255,255,0.4); border-radius: 18px;
+      margin-bottom: 10px; gap: 12px;
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      border: 1px solid transparent;
+    }
+    [data-theme="dark"] .task-item { background: rgba(255,255,255,0.05); }
+    .task-item:hover { transform: translateX(4px); border-color: rgba(var(--accent-rgb), 0.3); }
+    .task-item.removing { animation: removeTask 0.3s forwards; }
+    @keyframes removeTask { to { opacity: 0; transform: translateX(40px); height: 0; padding: 0; margin: 0; } }
+
+    .task-checkbox {
+      width: 20px; height: 20px; border-radius: 6px;
+      border: 2px solid rgba(var(--accent-rgb), 0.4);
+      background: transparent; cursor: pointer; appearance: none;
+      transition: all 0.2s ease; flex-shrink: 0; position: relative;
+    }
+    .task-checkbox:hover { border-color: var(--accent); }
+    .task-checkbox:checked { background: var(--accent); border-color: var(--accent); }
+    .task-checkbox:checked::after {
+      content: '✓'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); color: white; font-size: 14px; font-weight: 800;
+    }
+
+    .task-text { flex: 1; padding: 4px 8px; cursor: text; font-size: 0.95rem; border-radius: 8px; }
+    .task-text:focus { background: rgba(0,0,0,0.05); outline: none; }
+    .task-meta { font-size: 0.72rem; opacity: 0.6; margin-right: 6px; white-space: nowrap; }
+    .task-meta.overdue { color: var(--danger); font-weight: 700; opacity: 0.85; }
+
+    #quote-text { font-size: 0.82rem; font-style: italic; opacity: 0.8; line-height: 1.5; margin-top: 5px; font-weight: 400; font-family: 'Fraunces', serif; }
+
+    .empty-state {
+      text-align: center; padding: 30px 20px; opacity: 0.5;
+      font-size: 0.9rem; font-style: italic;
+    }
+    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 8px; opacity: 0.7; }
+
+    .cat-header { display: flex; align-items: baseline; gap: 10px; margin-top: 0; }
+    .cat-count {
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 0.7rem; font-weight: 800; padding: 2px 10px;
+      border-radius: 20px; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .search-bar {
+      padding: 10px 16px 10px 40px; border-radius: 14px;
+      background: rgba(255,255,255,0.3); border: 1px solid var(--glass-border);
+      font-size: 0.9rem; width: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 14px center;
+    }
+
+    .stats-bar {
+      display: flex; gap: 12px; padding: 14px 18px;
+      background: var(--glass-strong); backdrop-filter: blur(25px);
+      border-radius: 18px; border: 1px solid var(--glass-border);
+      margin-bottom: 22px; box-shadow: var(--card-shadow);
+      animation: fadeUp 0.5s ease;
+    }
+    .stat { flex: 1; text-align: center; }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-top: 4px; }
+
+    .toast-container {
+      position: fixed; top: 24px; right: 24px; z-index: 200;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      padding: 12px 18px; border-radius: 14px;
+      background: var(--glass-strong); backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.15);
+      font-size: 0.85rem; font-weight: 600;
+      animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex; align-items: center; gap: 10px;
+      min-width: 240px; max-width: 360px;
+    }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    .toast.removing { animation: slideOutRight 0.3s forwards; }
+    @keyframes slideOutRight { to { opacity: 0; transform: translateX(40px); } }
+    .toast .icon { font-size: 1.2rem; }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.info { border-left: 3px solid var(--accent); }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center; z-index: 300;
+      animation: fadeUp 0.25s ease;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--glass-strong); backdrop-filter: blur(30px);
+      border-radius: 24px; border: 1px solid var(--glass-border);
+      padding: 30px; max-width: 560px; width: 90%; max-height: 85vh; overflow-y: auto;
+      animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .modal h2 { margin-top: 0; }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text);
+    }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid currentColor; border-right-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+
+    .confetti {
+      position: fixed; width: 8px; height: 8px;
+      pointer-events: none; z-index: 1000;
+      animation: confettiFall 1.2s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(120px) rotate(360deg); }
+    }
+
+    .task-text.done { text-decoration: line-through; opacity: 0.4; }
+
+    .meal-slot {
+      padding: 15px; border-radius: 18px;
+      background: rgba(0,0,0,0.02); border: 1px solid var(--glass-border);
+      transition: all 0.2s ease;
+    }
+    .meal-slot:hover { background: rgba(var(--accent-rgb), 0.04); }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -82,86 +307,126 @@
 
   <div class="sidebar">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button style="width:36px; height:36px; border-radius:10px; border:1px solid var(--glass-border); background:var(--glass); cursor:pointer;" onclick="toggleTheme()">🌓</button>
-      <div id="greeting" style="font-weight: 800; font-size: 1.2rem;">Hello!</div>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+      <div style="text-align: right;">
+        <div id="greeting" style="font-weight: 800; font-size: 1.15rem; font-family: 'Fraunces', serif;">Hello!</div>
+        <div id="liveClock" class="clock">--:--</div>
+      </div>
     </div>
-    
+
     <div class="status-container">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div id="weather-icon" style="font-size: 2.5rem;">☀️</div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div id="weather-icon">☀️</div>
         <div style="text-align: left;">
-          <div id="temp" style="font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1;">--°</div>
-          <div id="weather-desc" style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.6;">Loading...</div>
+          <div id="temp" class="display" style="font-size: 2.4rem; font-weight: 700; color: var(--accent); line-height: 1;">--°</div>
+          <div id="weather-desc" style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.5px;">Loading...</div>
         </div>
       </div>
-      
       <div class="weather-info-row">
         <span>🌡️ Feels: <b id="feels-like">--°</b></span>
         <span>💧 Hum: <b id="humidity">--%</b></span>
       </div>
-
-      <div id="quote-container" style="margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px;">
-        <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5;">Inspiration</div>
-        <div id="quote-text">"Design is not just what it looks like and feels like. Design is how it works."</div>
+      <div id="quote-container" style="margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px; width: 100%;">
+        <div style="font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.5;">Inspiration</div>
+        <div id="quote-text">"Design is how it works."</div>
       </div>
     </div>
 
-    <hr style="opacity: 0.1; width: 100%; margin: 5px 0;">
-    <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.4; text-transform: uppercase;">Management</div>
+    <div class="summary-card">
+      <div class="summary-label">📊 Today at a glance</div>
+      <div class="summary-content" id="summaryContent">Loading your day...</div>
+    </div>
+
+    <hr style="opacity: 0.1; width: 100%; margin: 2px 0;">
+    <div style="font-size: 0.62rem; font-weight: 800; opacity: 0.4; text-transform: uppercase; letter-spacing: 1.5px;">Management</div>
 
     <div class="mgmt-card">
-      <div class="mgmt-header"><span class="mgmt-label">🍱 Food Master</span><button class="view-btn" style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('foodList')">VIEW ALL</button></div>
-      <div style="display: flex; gap: 8px;"><input type="text" id="foodIn" placeholder="Add..."><button class="btn-add" onclick="addFood()">+</button></div>
+      <div class="mgmt-header">
+        <span class="mgmt-label">🍱 Food Master</span>
+        <button style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('foodList')">VIEW ALL</button>
+      </div>
+      <div style="display: flex; gap: 8px;"><input type="text" id="foodIn" placeholder="Add food..." onkeydown="if(event.key==='Enter')addFood()"><button class="btn-add" onclick="addFood()">+</button></div>
       <div id="foodList" class="db-list"></div>
     </div>
 
     <div class="mgmt-card">
-      <div class="mgmt-header"><span class="mgmt-label">🗂️ Categories</span><button class="view-btn" style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('catList')">VIEW ALL</button></div>
-      <div style="display: flex; gap: 8px;"><input type="text" id="catIn" placeholder="Add..."><button class="btn-add" onclick="addCat()">+</button></div>
+      <div class="mgmt-header">
+        <span class="mgmt-label">🗂️ Categories</span>
+        <button style="background:none; border:none; color:var(--accent); font-weight:800; font-size:0.65rem; cursor:pointer;" onclick="toggleVisibility('catList')">VIEW ALL</button>
+      </div>
+      <div style="display: flex; gap: 8px;"><input type="text" id="catIn" placeholder="Add category..." onkeydown="if(event.key==='Enter')addCat()"><button class="btn-add" onclick="addCat()">+</button></div>
       <div id="catList" class="db-list"></div>
     </div>
   </div>
 
   <div class="main-content">
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Active Tasks</div></div>
+      <div class="stat"><div class="stat-value" id="stat-today">0</div><div class="stat-label">Due Today</div></div>
+      <div class="stat"><div class="stat-value" id="stat-cats">0</div><div class="stat-label">Categories</div></div>
+      <div class="stat"><div class="stat-value" id="stat-foods">0</div><div class="stat-label">Foods Saved</div></div>
+    </div>
+
     <div class="section">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3 style="margin:0; font-weight: 800;">🍽️ Meal Planner</h3>
-        <input type="date" id="mealDate" onchange="loadMealData()" style="width: auto;">
+        <h2 style="margin:0; font-weight: 700; font-size: 1.5rem;">🍽️ Meal Planner</h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-soft" onclick="randomMeals()">🎲 Randomize</button>
+          <input type="date" id="mealDate" onchange="loadMealData()" style="width: auto;">
+        </div>
       </div>
       <div class="meal-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
-          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">MORNING</small>
+        <div class="meal-slot">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px; letter-spacing: 1px;">MORNING</small>
           <select id="select-morn" onchange="updateMeal('morn')"></select>
+          <button class="btn-soft" style="margin-top: 8px;" onclick="showRecipe('morn')">🍳 Find Recipe</button>
         </div>
-        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
-          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">AFTERNOON</small>
+        <div class="meal-slot">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px; letter-spacing: 1px;">AFTERNOON</small>
           <select id="select-aft" onchange="updateMeal('aft')"></select>
+          <button class="btn-soft" style="margin-top: 8px;" onclick="showRecipe('aft')">🍳 Find Recipe</button>
         </div>
-        <div style="padding:15px; border-radius:18px; background:rgba(0,0,0,0.02); border:1px solid var(--glass-border);">
-          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px;">NIGHT</small>
+        <div class="meal-slot">
+          <small style="color:var(--accent); font-weight:800; display:block; margin-bottom:8px; letter-spacing: 1px;">NIGHT</small>
           <select id="select-nyt" onchange="updateMeal('nyt')"></select>
+          <button class="btn-soft" style="margin-top: 8px;" onclick="showRecipe('nyt')">🍳 Find Recipe</button>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h3 style="margin-top:0; font-weight: 800;">✍️ Quick Add Task</h3>
+      <h2 style="margin-top:0; font-weight: 700; font-size: 1.5rem;">✍️ Quick Add Task</h2>
       <div class="task-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px;">
-        <input type="text" id="taskIn" placeholder="Task name...">
+        <input type="text" id="taskIn" placeholder="Task name... (Press Enter)" onkeydown="if(event.key==='Enter')addTask()">
         <select id="taskCatSelect"></select>
         <input type="date" id="taskD">
         <input type="time" id="taskT">
-        <button onclick="addTask()" class="btn-add">Add Task</button>
+        <button onclick="addTask()" class="btn-add">+ Add</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <input type="text" class="search-bar" id="taskSearch" placeholder="Search tasks..." oninput="renderTasks()">
       </div>
     </div>
+
     <div id="taskContainer"></div>
   </div>
+
+  <div class="modal-backdrop" id="recipeModal" onclick="if(event.target===this)closeRecipe()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeRecipe()">✕</button>
+      <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.6; text-transform: uppercase; letter-spacing: 1.5px;">🍳 Recipe</div>
+      <h2 id="recipeTitle" style="margin: 6px 0 16px;">Recipe</h2>
+      <div id="recipeContent" style="line-height: 1.7; font-size: 0.95rem;">Loading...</div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBK8WyG6Ax3tRRq9sPBol-e9LDSiwB9JZE",
       authDomain: "mydashboard-7ace0.firebaseapp.com",
-      databaseURL: "https://mydashboard-7ace0-default-rtdb.asia-southeast1.firebasedatabase.app/", 
+      databaseURL: "https://mydashboard-7ace0-default-rtdb.asia-southeast1.firebasedatabase.app/",
       projectId: "mydashboard-7ace0",
       storageBucket: "mydashboard-7ace0.firebasestorage.app",
       messagingSenderId: "66001498071",
@@ -171,86 +436,216 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let tasks = [], categories = [], masterFoods = [];
+    let currentMealData = {};
 
     const quotes = [
       "Architecture should speak of its time and place, but yearn for timelessness.",
       "God is in the details.",
       "A room is not a room without natural light.",
       "Form ever follows function.",
-      "The mother art is architecture. Without an architecture of our own we have no soul.",
-      "To provide meaningful architecture is not to copy history, but to articulate it.",
       "Logic will get you from A to B. Imagination will take you everywhere.",
       "We shape our buildings; thereafter they shape us.",
       "Recognizing the need is the primary condition for design.",
-      "Architecture is the learned game of forms assembled in the light."
+      "Architecture is the learned game of forms assembled in the light.",
+      "Simplicity is the ultimate sophistication.",
+      "Make it work, make it right, make it fast.",
+      "The details are not the details. They make the design.",
+      "Less is more.",
+      "Good design is obvious. Great design is transparent."
     ];
 
     function setRandomContext() {
-      const randomIndex = Math.floor(Math.random() * quotes.length);
-      document.getElementById('quote-text').innerText = `"${quotes[randomIndex]}"`;
-      const varietyUrl = `https://picsum.photos/1920/1080?random=${Math.floor(Math.random() * 1000)}`;
-      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('${varietyUrl}')`;
+      const i = Math.floor(Math.random() * quotes.length);
+      document.getElementById('quote-text').innerText = `"${quotes[i]}"`;
+      const url = `https://picsum.photos/1920/1080?random=${Math.floor(Math.random() * 1000)}`;
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)), url('${url}')`;
     }
 
+    function toast(msg, type = 'info') {
+      const icons = { success: '✅', error: '⚠️', info: '💡' };
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<span class="icon">${icons[type]}</span><span>${msg}</span>`;
+      document.getElementById('toastContainer').appendChild(el);
+      setTimeout(() => {
+        el.classList.add('removing');
+        setTimeout(() => el.remove(), 300);
+      }, 2800);
+    }
+
+    function confettiBurst(x, y) {
+      const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+      for (let i = 0; i < 14; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+        c.style.top = y + 'px';
+        c.style.transform = `rotate(${Math.random() * 360}deg)`;
+        c.style.animationDelay = (Math.random() * 0.2) + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 1400);
+      }
+    }
+
+    // ============== RECIPES (TheMealDB - free, no API key) ==============
+    async function showRecipe(slot) {
+      const meal = document.getElementById(`select-${slot}`).value;
+      if (!meal) { toast('Pick a meal first', 'error'); return; }
+
+      const modal = document.getElementById('recipeModal');
+      const titleEl = document.getElementById('recipeTitle');
+      const contentEl = document.getElementById('recipeContent');
+      titleEl.innerText = meal;
+      contentEl.innerHTML = '<div style="display:flex; align-items:center; gap:10px; opacity:0.7;"><span class="spinner"></span> Searching free recipe database...</div>';
+      modal.classList.add('open');
+
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(meal)}`);
+        const data = await res.json();
+
+        if (data.meals && data.meals.length > 0) {
+          const m = data.meals[0];
+          const ingredients = [];
+          for (let i = 1; i <= 20; i++) {
+            const ing = m[`strIngredient${i}`];
+            const measure = m[`strMeasure${i}`];
+            if (ing && ing.trim()) {
+              ingredients.push(`${(measure || '').trim()} ${ing.trim()}`.trim());
+            }
+          }
+
+          titleEl.innerText = m.strMeal;
+          contentEl.innerHTML = `
+            ${m.strMealThumb ? `<img src="${m.strMealThumb}" alt="${m.strMeal}" style="width:100%; max-height:240px; object-fit:cover; border-radius:14px; margin-bottom:14px;">` : ''}
+            <div style="font-size:0.78rem; opacity:0.7; margin-bottom: 10px;">
+              ${m.strCategory ? `<b>${m.strCategory}</b>` : ''}
+              ${m.strArea ? ` · ${m.strArea}` : ''}
+              ${m.strTags ? ` · ${m.strTags.split(',').slice(0,2).join(', ')}` : ''}
+            </div>
+            <h3 style="margin: 14px 0 6px; font-size: 1.15rem;">Ingredients</h3>
+            <ul style="padding-left:20px; line-height: 1.7; font-size: 0.92rem; margin: 6px 0;">${ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+            <h3 style="margin: 16px 0 6px; font-size: 1.15rem;">Instructions</h3>
+            <div style="line-height: 1.7; font-size: 0.92rem;">${m.strInstructions.replace(/\r?\n\r?\n/g, '<br><br>').replace(/\r?\n/g, ' ')}</div>
+            <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+              ${m.strYoutube ? `<a href="${m.strYoutube}" target="_blank" style="padding: 10px 16px; border-radius: 12px; background: #ff0000; color: white; text-decoration: none; font-weight: 700; font-size: 0.85rem;">▶ Watch on YouTube</a>` : ''}
+              ${m.strSource ? `<a href="${m.strSource}" target="_blank" style="padding: 10px 16px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); text-decoration: none; font-weight: 700; font-size: 0.85rem;">📖 Full source</a>` : ''}
+            </div>
+          `;
+        } else {
+          // Not in TheMealDB - fallback to web search links
+          contentEl.innerHTML = `
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 3rem; opacity: 0.4;">🤷</div>
+              <p style="opacity: 0.8; margin: 12px 0;">"<b>${meal}</b>" isn't in the free recipe database (it leans Western).</p>
+              <p style="opacity: 0.65; font-size: 0.88rem;">Search the web instead — also free:</p>
+              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
+                <a href="https://www.google.com/search?q=${encodeURIComponent(meal + ' recipe')}" target="_blank" style="padding: 10px 18px; border-radius: 12px; background: var(--accent); color: white; text-decoration: none; font-weight: 700; font-size: 0.85rem;">🔍 Google</a>
+                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(meal + ' recipe')}" target="_blank" style="padding: 10px 18px; border-radius: 12px; background: #ff0000; color: white; text-decoration: none; font-weight: 700; font-size: 0.85rem;">▶ YouTube</a>
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        contentEl.innerHTML = '<div style="opacity:0.7; text-align:center; padding:20px;">⚠️ Failed to load recipe. Check your connection.</div>';
+      }
+    }
+
+    function closeRecipe() {
+      document.getElementById('recipeModal').classList.remove('open');
+    }
+
+    // ============== RANDOM MEAL PICKER ==============
+    function randomMeals() {
+      if (masterFoods.length < 1) {
+        toast('Add some foods to your master list first', 'error');
+        return;
+      }
+      const shuffled = [...masterFoods].sort(() => Math.random() - 0.5);
+      ['morn', 'aft', 'nyt'].forEach((slot, i) => {
+        const pick = shuffled[i % shuffled.length];
+        document.getElementById(`select-${slot}`).value = pick;
+        updateMeal(slot);
+      });
+      toast('Randomized your meals! 🎲', 'success');
+    }
+
+    // ============== TODAY'S SUMMARY (local, no AI) ==============
+    function updateTodaySummary() {
+      const today = new Date().toISOString().split('T')[0];
+      const active = tasks.filter(t => !t.done);
+      const todayTasks = active.filter(t => t.date === today);
+      const overdue = active.filter(t => t.date && t.date < today);
+
+      const weather = (document.getElementById('weather-desc').innerText || '').toLowerCase();
+      const temp = document.getElementById('temp').innerText;
+      const weatherBit = (weather && weather !== 'loading...' && weather !== 'unknown')
+        ? ` It's <b>${weather}</b> at ${temp} outside.` : '';
+
+      let s = '';
+      if (todayTasks.length === 0 && overdue.length === 0 && active.length === 0) {
+        s = `<b>Inbox zero. ✨</b>${weatherBit} Add a task to get going.`;
+      } else if (todayTasks.length === 0 && overdue.length === 0) {
+        s = `Nothing due today — <b>${active.length}</b> task${active.length === 1 ? '' : 's'} on the runway.${weatherBit}`;
+      } else {
+        const parts = [];
+        if (todayTasks.length) parts.push(`<b>${todayTasks.length}</b> due today`);
+        if (overdue.length) parts.push(`<b style="color: var(--danger);">${overdue.length} overdue</b>`);
+        s = parts.join(' · ') + '.' + weatherBit;
+      }
+      document.getElementById('summaryContent').innerHTML = s;
+    }
+
+    // ============== WEATHER ==============
     async function syncWeather() {
       const weatherMap = {
-        0: { icon: "☀️", desc: "Clear Sky" },
-        1: { icon: "🌤️", desc: "Mainly Clear" },
-        2: { icon: "⛅", desc: "Partly Cloudy" },
-        3: { icon: "☁️", desc: "Overcast" },
-        45: { icon: "🌫️", desc: "Foggy" },
-        51: { icon: "🌦️", desc: "Drizzle" },
-        61: { icon: "🌧️", desc: "Rainy" },
-        71: { icon: "❄️", desc: "Snowy" },
-        80: { icon: "🌦️", desc: "Showers" },
-        95: { icon: "⛈️", desc: "Stormy" }
+        0: { icon: "☀️", desc: "Clear Sky" }, 1: { icon: "🌤️", desc: "Mainly Clear" },
+        2: { icon: "⛅", desc: "Partly Cloudy" }, 3: { icon: "☁️", desc: "Overcast" },
+        45: { icon: "🌫️", desc: "Foggy" }, 51: { icon: "🌦️", desc: "Drizzle" },
+        61: { icon: "🌧️", desc: "Rainy" }, 71: { icon: "❄️", desc: "Snowy" },
+        80: { icon: "🌦️", desc: "Showers" }, 95: { icon: "⛈️", desc: "Stormy" }
       };
-
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code');
         const data = await res.json();
         const cur = data.current;
-        const weatherInfo = weatherMap[cur.weather_code] || { icon: "🌡️", desc: "Weather" };
-
-        const weatherObj = {
+        const info = weatherMap[cur.weather_code] || { icon: "🌡️", desc: "Weather" };
+        const obj = {
           temp: Math.round(cur.temperature_2m),
           feels: Math.round(cur.apparent_temperature),
           hum: Math.round(cur.relative_humidity_2m),
-          icon: weatherInfo.icon,
-          desc: weatherInfo.desc
+          icon: info.icon, desc: info.desc
         };
-
-        // Immediate Local UI Update
-        updateWeatherUI(weatherObj);
-        // Save to Firebase
-        db.ref('dashboard/weatherData').set(weatherObj); 
-      } catch (e) { 
-        console.error("Weather update failed", e);
-      }
+        updateWeatherUI(obj);
+        db.ref('dashboard/weatherData').set(obj);
+      } catch (e) { console.error(e); }
     }
 
-    function updateWeatherUI(val) {
-      if (!val) return;
-      document.getElementById('temp').innerText = (val.temp || "--") + "°";
-      document.getElementById('feels-like').innerText = (val.feels || "--") + "°";
-      document.getElementById('humidity').innerText = (val.hum || "--") + "%";
-      document.getElementById('weather-icon').innerText = val.icon || "🌡️";
-      document.getElementById('weather-desc').innerText = val.desc || "Unknown";
+    function updateWeatherUI(v) {
+      if (!v) return;
+      document.getElementById('temp').innerText = (v.temp || "--") + "°";
+      document.getElementById('feels-like').innerText = (v.feels || "--") + "°";
+      document.getElementById('humidity').innerText = (v.hum || "--") + "%";
+      document.getElementById('weather-icon').innerText = v.icon || "🌡️";
+      document.getElementById('weather-desc').innerText = v.desc || "Unknown";
+      updateTodaySummary();
     }
 
-    // Listen for Weather Data from Firebase
     db.ref('dashboard/weatherData').on('value', (s) => {
-      const val = s.val();
-      if (val && val.temp !== undefined) {
-        updateWeatherUI(val);
-      } else {
-        syncWeather();
-      }
+      const v = s.val();
+      if (v && v.temp !== undefined) updateWeatherUI(v);
+      else syncWeather();
     });
 
-    function toggleVisibility(id) {
-      const el = document.getElementById(id);
-      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    function toggleVisibility(id) { document.getElementById(id).classList.toggle('open'); }
+
+    function updateStats() {
+      const today = new Date().toISOString().split('T')[0];
+      const active = tasks.filter(t => !t.done);
+      document.getElementById('stat-total').innerText = active.length;
+      document.getElementById('stat-today').innerText = active.filter(t => t.date === today).length;
+      document.getElementById('stat-cats').innerText = categories.length;
+      document.getElementById('stat-foods').innerText = masterFoods.length;
     }
 
     db.ref('dashboard').on('value', (snap) => {
@@ -259,82 +654,155 @@
       masterFoods = (data.masterFoods || []).sort((a, b) => a.localeCompare(b));
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
 
-      const currentCatVal = document.getElementById('taskCatSelect').value;
+      const cur = document.getElementById('taskCatSelect').value;
       document.getElementById('taskCatSelect').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (categories.includes(currentCatVal)) {
-          document.getElementById('taskCatSelect').value = currentCatVal;
-      }
+      if (categories.includes(cur)) document.getElementById('taskCatSelect').value = cur;
 
       const opts = `<option value="">Select...</option>` + masterFoods.map(f => `<option value="${f}">${f}</option>`).join('');
       ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).innerHTML = opts);
 
-      document.getElementById('foodList').innerHTML = masterFoods.map((f, i) => `<div class="db-item"><span>${f}</span><button class="btn-del" onclick="delFood(${i})">&times;</button></div>`).join('');
-      document.getElementById('catList').innerHTML = categories.map((c, i) => `<div class="db-item"><span>${c}</span><button class="btn-del" onclick="delCat(${i})">&times;</button></div>`).join('');
+      document.getElementById('foodList').innerHTML = masterFoods.length
+        ? masterFoods.map((f, i) => `<div class="db-item"><span>${f}</span><button class="btn-del" onclick="delFood(${i})">&times;</button></div>`).join('')
+        : '<div class="empty-state" style="padding: 10px;">No foods yet</div>';
 
-      renderTasks(); 
+      document.getElementById('catList').innerHTML = categories.length
+        ? categories.map((c, i) => `<div class="db-item"><span>${c}</span><button class="btn-del" onclick="delCat(${i})">&times;</button></div>`).join('')
+        : '<div class="empty-state" style="padding: 10px;">No categories</div>';
+
+      renderTasks();
       loadMealData();
+      updateStats();
+      updateTodaySummary();
     });
 
-    function addFood() { 
-      const v = document.getElementById('foodIn').value.trim(); 
-      if(v){
-        masterFoods.push(v); 
+    function addFood() {
+      const v = document.getElementById('foodIn').value.trim();
+      if (v) {
+        if (masterFoods.includes(v)) { toast('Already in list', 'error'); return; }
+        masterFoods.push(v);
         masterFoods.sort((a, b) => a.localeCompare(b));
-        db.ref('dashboard/masterFoods').set(masterFoods); 
-        document.getElementById('foodIn').value="";
-      } 
+        db.ref('dashboard/masterFoods').set(masterFoods);
+        document.getElementById('foodIn').value = "";
+        toast(`Added "${v}"`, 'success');
+      }
     }
-    
-    function delFood(i) { masterFoods.splice(i,1); db.ref('dashboard/masterFoods').set(masterFoods); }
-    function addCat() { const v = document.getElementById('catIn').value.trim(); if(v){categories.push(v); db.ref('dashboard/categories').set(categories); document.getElementById('catIn').value="";} }
-    function delCat(i) { categories.splice(i,1); db.ref('dashboard/categories').set(categories); }
+    function delFood(i) { const name = masterFoods[i]; masterFoods.splice(i, 1); db.ref('dashboard/masterFoods').set(masterFoods); toast(`Removed "${name}"`, 'info'); }
+    function addCat() {
+      const v = document.getElementById('catIn').value.trim();
+      if (v) {
+        if (categories.includes(v)) { toast('Category exists', 'error'); return; }
+        categories.push(v);
+        db.ref('dashboard/categories').set(categories);
+        document.getElementById('catIn').value = "";
+        toast(`Added category "${v}"`, 'success');
+      }
+    }
+    function delCat(i) { const name = categories[i]; categories.splice(i, 1); db.ref('dashboard/categories').set(categories); toast(`Removed "${name}"`, 'info'); }
 
     function addTask() {
       const text = document.getElementById('taskIn').value.trim();
-      const selectedCat = document.getElementById('taskCatSelect').value;
+      const cat = document.getElementById('taskCatSelect').value;
       if (!text) return;
-      tasks.push({ text, cat: selectedCat, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
+      tasks.push({ text, cat, date: document.getElementById('taskD').value, time: document.getElementById('taskT').value, done: false });
       db.ref('dashboard/tasks').set(tasks).then(() => {
         document.getElementById('taskIn').value = "";
         document.getElementById('taskD').value = "";
         document.getElementById('taskT').value = "";
-        document.getElementById('taskCatSelect').value = selectedCat;
+        toast('Task added', 'success');
       });
     }
 
-    function editTask(i, newText) { if(tasks[i].text !== newText) { tasks[i].text = newText; db.ref('dashboard/tasks').set(tasks); } }
-    
-    function toggleDone(i) { 
-      tasks.splice(i, 1); 
-      db.ref('dashboard/tasks').set(tasks); 
+    function editTask(i, newText) {
+      if (tasks[i] && tasks[i].text !== newText) {
+        tasks[i].text = newText.trim();
+        db.ref('dashboard/tasks').set(tasks);
+      }
     }
-    
-    function deleteTask(i) { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }
+
+    function toggleDone(i, ev) {
+      if (ev) {
+        const rect = ev.target.getBoundingClientRect();
+        confettiBurst(rect.left + rect.width / 2, rect.top);
+      }
+      const taskEl = document.querySelector(`[data-task-idx="${i}"]`);
+      if (taskEl) {
+        taskEl.classList.add('removing');
+        setTimeout(() => {
+          tasks.splice(i, 1);
+          db.ref('dashboard/tasks').set(tasks);
+          toast('Task completed! 🎉', 'success');
+        }, 250);
+      } else {
+        tasks.splice(i, 1);
+        db.ref('dashboard/tasks').set(tasks);
+      }
+    }
+
+    function deleteTask(i) {
+      const taskEl = document.querySelector(`[data-task-idx="${i}"]`);
+      if (taskEl) {
+        taskEl.classList.add('removing');
+        setTimeout(() => { tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks); }, 250);
+      } else {
+        tasks.splice(i, 1); db.ref('dashboard/tasks').set(tasks);
+      }
+      toast('Task deleted', 'info');
+    }
 
     function renderTasks() {
-      const cont = document.getElementById('taskContainer'); cont.innerHTML = "";
+      const cont = document.getElementById('taskContainer');
+      const query = document.getElementById('taskSearch').value.trim().toLowerCase();
+      const today = new Date().toISOString().split('T')[0];
+      cont.innerHTML = "";
+
+      let totalShown = 0;
       categories.forEach(cat => {
-        const div = document.createElement('div'); div.className = "section";
-        div.innerHTML = `<h3 style="margin-top:0;">${cat}</h3><div id="l-${cat.replace(/\s+/g,'')}"></div>`;
+        const catTasks = tasks
+          .map((t, i) => ({ t, i }))
+          .filter(({ t }) => t.cat === cat && (!query || t.text.toLowerCase().includes(query)));
+        if (query && catTasks.length === 0) return;
+
+        const div = document.createElement('div');
+        div.className = "section";
+        div.innerHTML = `<h2 class="cat-header" style="font-size: 1.3rem;">${cat} <span class="cat-count">${catTasks.length}</span></h2>`;
+
+        if (catTasks.length === 0) {
+          div.innerHTML += '<div class="empty-state"><span class="icon">📭</span>No tasks here yet</div>';
+        } else {
+          catTasks.forEach(({ t, i }) => {
+            totalShown++;
+            const dt = [t.date, t.time].filter(Boolean).join(' · ');
+            const overdue = t.date && t.date < today;
+            const taskHtml = `
+              <div class="task-item" data-task-idx="${i}">
+                <input type="checkbox" class="task-checkbox" onchange="toggleDone(${i}, event)">
+                <div class="task-text ${t.done ? 'done' : ''}" contenteditable="true" onblur="editTask(${i}, this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${t.text}</div>
+                ${dt ? `<small class="task-meta ${overdue ? 'overdue' : ''}">${overdue ? '⏰ ' : ''}${dt}</small>` : ''}
+                <button onclick="deleteTask(${i})" class="btn-del" title="Delete">&times;</button>
+              </div>`;
+            div.innerHTML += taskHtml;
+          });
+        }
         cont.appendChild(div);
-        tasks.filter(t => t.cat === cat).forEach((t) => {
-          const idx = tasks.indexOf(t);
-          const dateTimeDisplay = [t.date, t.time].filter(Boolean).join(' | ');
-          div.querySelector('div').innerHTML += `
-            <div class="task-item">
-              <input type="checkbox" style="width:auto; margin-right:15px;" onchange="toggleDone(${idx})">
-              <div class="task-text" contenteditable="true" onblur="editTask(${idx}, this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" style="${t.done?'text-decoration:line-through; opacity:0.4':''}">${t.text}</div>
-              <small style="opacity:0.5; margin-right:10px;">${dateTimeDisplay}</small>
-              <button onclick="deleteTask(${idx})" class="btn-del">&times;</button>
-            </div>`;
-        });
       });
+
+      if (query && totalShown === 0) {
+        cont.innerHTML = '<div class="section"><div class="empty-state"><span class="icon">🔍</span>No tasks match "' + query + '"</div></div>';
+      }
+      updateStats();
+      updateTodaySummary();
     }
 
-    function updateMeal(s) { db.ref(`dashboard/mealPlanner/${document.getElementById('mealDate').value}/${s}`).set(document.getElementById(`select-${s}`).value); }
+    function updateMeal(s) {
+      const val = document.getElementById(`select-${s}`).value;
+      db.ref(`dashboard/mealPlanner/${document.getElementById('mealDate').value}/${s}`).set(val);
+      currentMealData[s] = val;
+    }
+
     function loadMealData() {
       db.ref(`dashboard/mealPlanner/${document.getElementById('mealDate').value}`).once('value', (snap) => {
         const d = snap.val() || {};
+        currentMealData = d;
         ['morn', 'aft', 'nyt'].forEach(t => document.getElementById(`select-${t}`).value = d[t] || "");
       });
     }
@@ -345,12 +813,28 @@
     }
     db.ref('dashboard/theme').on('value', (s) => document.body.setAttribute('data-theme', s.val() || 'light'));
 
-    setInterval(syncWeather, 1800000);
+    function tickClock() {
+      const d = new Date();
+      const h = d.getHours().toString().padStart(2, '0');
+      const m = d.getMinutes().toString().padStart(2, '0');
+      const s = d.getSeconds().toString().padStart(2, '0');
+      document.getElementById('liveClock').innerText = `${h}:${m}:${s}`;
+    }
+    setInterval(tickClock, 1000);
+    tickClock();
 
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
+      if (e.key === 'n' || e.key === 'N') { e.preventDefault(); document.getElementById('taskIn').focus(); }
+      if (e.key === '/') { e.preventDefault(); document.getElementById('taskSearch').focus(); }
+      if (e.key === 'r' || e.key === 'R') { e.preventDefault(); randomMeals(); }
+      if (e.key === 'Escape') { closeRecipe(); }
+    });
+
+    setInterval(syncWeather, 1800000);
     const h = new Date().getHours();
-    document.getElementById('greeting').innerText = (h < 12) ? "Morning!" : (h < 17) ? "Afternoon!" : "Evening!";
+    document.getElementById('greeting').innerText = (h < 12) ? "Good Morning" : (h < 17) ? "Good Afternoon" : "Good Evening";
     document.getElementById('mealDate').value = new Date().toISOString().split('T')[0];
-    
     setRandomContext();
   </script>
 </body>
